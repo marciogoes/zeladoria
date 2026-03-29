@@ -1,41 +1,85 @@
-# Node
-node_modules/
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
+# ============================================
+# .GITIGNORE - Sistema de Zeladoria Urbana
+# ============================================
 
-# Ambiente
+# ==========================================
+# DEPENDÊNCIAS (NUNCA commitar)
+# ==========================================
+node_modules/
+venv/
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+
+# ==========================================
+# BANCOS DE DADOS LOCAIS (NUNCA commitar)
+# ==========================================
+*.db
+*.sqlite
+*.sqlite3
+*.sql.backup
+
+# ==========================================
+# VARIÁVEIS DE AMBIENTE (NUNCA commitar)
+# ==========================================
 .env
 .env.local
 .env.production
+.env.staging
+# Manter: .env.example e .env.production (template)
+!.env.example
+!.env.production
 
-# Logs
-logs/
-*.log
-
-# Build
+# ==========================================
+# BUILD / DIST
+# ==========================================
 dist/
 build/
+.vite/
+*.egg
 
-# Uploads
+# ==========================================
+# LOGS
+# ==========================================
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+
+# ==========================================
+# UPLOADS (dados de usuários, não código)
+# ==========================================
 uploads/
+backups/
 
-# IDE
+# ==========================================
+# IDE / SISTEMA OPERACIONAL
+# ==========================================
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
 .DS_Store
 Thumbs.db
+desktop.ini
 
-# Database
-*.sql.backup
-
-# Tests
+# ==========================================
+# CACHE
+# ==========================================
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
 coverage/
+.coverage
+htmlcov/
 
-# Temp
+# ==========================================
+# TEMPORÁRIOS
+# ==========================================
 tmp/
 temp/
+*.tmp
