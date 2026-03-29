@@ -49,13 +49,13 @@ def popular_categorias(db: Session):
     sesma = db.query(Secretaria).filter_by(sigla="SESMA").first()
 
     categorias_data = [
-        {"nome": "Buraco na via", "descricao": "Buracos e problemas no asfalto", "icone": "road", "cor": "#FF6B6B", "secretaria_id": seurb.id if seurb else None, "sla_horas": 48},
-        {"nome": "Iluminação pública", "descricao": "Lâmpadas queimadas ou postes danificados", "icone": "lightbulb", "cor": "#FFD93D", "secretaria_id": seurb.id if seurb else None, "sla_horas": 24},
-        {"nome": "Calçada danificada", "descricao": "Calçadas quebradas ou irregulares", "icone": "shoe-prints", "cor": "#A8DADC", "secretaria_id": seurb.id if seurb else None, "sla_horas": 72},
-        {"nome": "Lixo acumulado", "descricao": "Acúmulo de lixo e entulho", "icone": "trash", "cor": "#6C757D", "secretaria_id": sesan.id if sesan else None, "sla_horas": 24},
-        {"nome": "Esgoto", "descricao": "Problemas com rede de esgoto", "icone": "water", "cor": "#8B4513", "secretaria_id": sesan.id if sesan else None, "sla_horas": 12},
-        {"nome": "Poda de árvore", "descricao": "Árvores que precisam de poda", "icone": "tree", "cor": "#27AE60", "secretaria_id": semma.id if semma else None, "sla_horas": 72},
-        {"nome": "Foco de dengue", "descricao": "Água parada e focos do mosquito", "icone": "bug", "cor": "#E63946", "secretaria_id": sesma.id if sesma else None, "sla_horas": 12},
+        {"nome": "Buraco na via", "descricao": "Buracos e problemas no asfalto", "icone": "road", "cor": "#FF6B6B", "sla_horas": 48},
+        {"nome": "Iluminação pública", "descricao": "Lâmpadas queimadas ou postes danificados", "icone": "lightbulb", "cor": "#FFD93D", "sla_horas": 24},
+        {"nome": "Calçada danificada", "descricao": "Calçadas quebradas ou irregulares", "icone": "shoe-prints", "cor": "#A8DADC", "sla_horas": 72},
+        {"nome": "Lixo acumulado", "descricao": "Acúmulo de lixo e entulho", "icone": "trash", "cor": "#6C757D", "sla_horas": 24},
+        {"nome": "Esgoto", "descricao": "Problemas com rede de esgoto", "icone": "water", "cor": "#8B4513", "sla_horas": 12},
+        {"nome": "Poda de árvore", "descricao": "Árvores que precisam de poda", "icone": "tree", "cor": "#27AE60", "sla_horas": 72},
+        {"nome": "Foco de dengue", "descricao": "Água parada e focos do mosquito", "icone": "bug", "cor": "#E63946", "sla_horas": 12},
     ]
     categorias = []
     for data in categorias_data:
