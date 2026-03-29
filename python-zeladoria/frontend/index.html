@@ -10,28 +10,28 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     <style>
         :root {
-            --bg-void: #060910;
-            --bg-deep: #0c1120;
-            --bg-surface: #111827;
-            --bg-elevated: #1a2235;
-            --bg-card: #1e2a3a;
-            --accent: #00d4aa;
-            --accent-dim: rgba(0, 212, 170, 0.12);
-            --accent-glow: rgba(0, 212, 170, 0.25);
-            --accent2: #3b7fff;
-            --accent2-dim: rgba(59, 127, 255, 0.12);
-            --warn: #f59e0b;
-            --danger: #ef4444;
-            --success: #10b981;
-            --text-primary: #f0f4ff;
-            --text-secondary: #8899bb;
-            --text-muted: #445566;
-            --border: rgba(255,255,255,0.07);
-            --border-active: rgba(0, 212, 170, 0.3);
+            --bg-void: #f0f4f8;
+            --bg-deep: #ffffff;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f5f7fa;
+            --bg-card: #eef2f7;
+            --accent: #0099aa;
+            --accent-dim: rgba(0, 153, 170, 0.10);
+            --accent-glow: rgba(0, 153, 170, 0.15);
+            --accent2: #2563eb;
+            --accent2-dim: rgba(37, 99, 235, 0.10);
+            --warn: #d97706;
+            --danger: #dc2626;
+            --success: #059669;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: rgba(0,0,0,0.08);
+            --border-active: rgba(0, 153, 170, 0.35);
             --radius: 14px;
             --radius-sm: 8px;
-            --shadow: 0 8px 32px rgba(0,0,0,0.4);
-            --shadow-glow: 0 0 40px rgba(0, 212, 170, 0.08);
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow-glow: 0 0 40px rgba(0, 153, 170, 0.06);
         }
 
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -116,9 +116,9 @@
             position: absolute;
             inset: 0;
             background:
-                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0,212,170,0.06) 0%, transparent 70%),
-                radial-gradient(ellipse 60% 80% at 80% 20%, rgba(59,127,255,0.06) 0%, transparent 70%),
-                radial-gradient(ellipse 50% 50% at 60% 80%, rgba(0,212,170,0.04) 0%, transparent 70%);
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0,153,170,0.05) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 80% at 80% 20%, rgba(37,99,235,0.05) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 60% 80%, rgba(0,153,170,0.03) 0%, transparent 70%);
             pointer-events: none;
         }
 
@@ -128,10 +128,23 @@
             flex-direction: column;
             justify-content: center;
             padding: 60px;
-            background: linear-gradient(135deg, rgba(0,212,170,0.04) 0%, transparent 60%);
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
             border-right: 1px solid var(--border);
             overflow: hidden;
         }
+
+        .login-left .brand-name,
+        .login-left .login-hero h1,
+        .login-left .login-hero p,
+        .login-left .stat-pill strong,
+        .login-left .stat-pill span {
+            color: #f0f4ff !important;
+        }
+
+        .login-left .stat-pill strong { color: #5eead4 !important; }
+        .login-left .login-hero p { color: #94a3b8 !important; }
+        .login-left .stat-pill span { color: #64748b !important; }
+        .login-left .highlight { color: #5eead4 !important; }
 
         .login-left::after {
             content: '';
@@ -225,8 +238,8 @@
             position: absolute;
             inset: 0;
             background-image:
-                linear-gradient(rgba(255,255,255,0.02) 1px, transparent 1px),
-                linear-gradient(90deg, rgba(255,255,255,0.02) 1px, transparent 1px);
+                linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
             background-size: 40px 40px;
             mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
             pointer-events: none;
@@ -342,7 +355,7 @@
             width: 100%;
             padding: 12px;
             background: var(--accent);
-            color: #060910;
+            color: #ffffff;
             border: none;
             border-radius: var(--radius-sm);
             font-family: 'Syne', sans-serif;
@@ -1225,8 +1238,8 @@
         /* Scrollbar */
         ::-webkit-scrollbar { width: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 3px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 
         /* Responsive */
         @media (max-width: 900px) {
