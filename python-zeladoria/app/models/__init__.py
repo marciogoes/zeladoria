@@ -12,6 +12,10 @@ from app.models.sprints_5_8 import (
     Fornecedor, ContratoFornecedor,
     SolicitacaoLGPD,
 )
+from app.models.sprints_9_12 import (
+    EquipeLocalizacao, OrdemServico,
+    LogTriagemIA, PrevisaoDemanda, RelatorioMensal,
+)
 
 __all__ = [
     "Usuario", "Secretaria", "Categoria", "Bairro", "Chamado", "Comentario",
@@ -21,4 +25,6 @@ __all__ = [
     "RegistroAuditoria",
     "Fornecedor", "ContratoFornecedor",
     "SolicitacaoLGPD",
+    "EquipeLocalizacao", "OrdemServico",
+    "LogTriagemIA", "PrevisaoDemanda", "RelatorioMensal",
 ]

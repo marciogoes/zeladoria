@@ -7,12 +7,15 @@ import os, logging
 
 from app.database.database import engine, Base, SessionLocal
 from app.routes import auth, chamados, categorias, bairros, usuarios, relatorios, secretarias, comentarios
+# inovacoes.py descontinuado — migrado para geo_router.py e ia_router.py (sprints 9-12)
 from app.routers.servicos_router import router as servicos_router
 from app.routers.catalogo_router import router as catalogo_router
 from app.routers.engajamento_router import router as engajamento_router
 from app.routers.integracoes_router import router as integracoes_router
 from app.routers.transparencia_router import router as transparencia_router, router_publico
 from app.routers.contratos_router import router as contratos_router
+from app.routers.geo_router import router as geo_router
+from app.routers.ia_router import router as ia_router
 from app.utils.scheduler_sla import iniciar_scheduler, parar_scheduler
 from app.health import router as health_router
 
@@ -99,6 +102,8 @@ app.include_router(integracoes_router)
 app.include_router(transparencia_router)
 app.include_router(router_publico)
 app.include_router(contratos_router)
+app.include_router(geo_router)
+app.include_router(ia_router)
 app.include_router(health_router, tags=["Health Check"])
 
 # Rota raiz
@@ -117,7 +122,16 @@ def read_root():
             "bairros": "/api/bairros",
             "secretarias": "/api/secretarias",
             "servicos": "/api/servicos",
-            "catalogo": "/api/catalogo"
+            "catalogo": "/api/catalogo",
+            "engajamento": "/api/engajamento",
+            "integracoes": "/api/integracoes",
+            "transparencia": "/api/transparencia",
+            "publico": "/api/publico",
+            "contratos": "/api/contratos",
+            "geo": "/api/geo",
+            "ia": "/api/ia",
+            "landing": "/landing",
+            "painel": "/api/ia/painel-publico"
         }
     }
 
