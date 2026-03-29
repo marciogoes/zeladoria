@@ -401,7 +401,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Pedro Almeida",
             "email": "pedro.almeida@email.com",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "123.456.789-00",
             "telefone": "(91) 98888-1111",
             "tipo": TipoUsuario.CIDADAO
@@ -411,7 +411,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "João Silva",
             "email": "joao.silva@belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "234.567.890-11",
             "telefone": "(91) 98888-2222",
             "tipo": TipoUsuario.EQUIPE
@@ -421,7 +421,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Carlos Mendes - SEURB",
             "email": "carlos.mendes@seurb.belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "345.678.901-22",
             "telefone": "(91) 3242-1500",
             "tipo": TipoUsuario.SECRETARIA,
@@ -432,7 +432,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Ana Costa - SESAN",
             "email": "ana.costa@sesan.belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "456.789.012-33",
             "telefone": "(91) 3242-1600",
             "tipo": TipoUsuario.SECRETARIA,
@@ -443,7 +443,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Roberto Lima - SEMMA",
             "email": "roberto.lima@semma.belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "567.890.123-44",
             "telefone": "(91) 3242-2100",
             "tipo": TipoUsuario.SECRETARIA,
@@ -454,7 +454,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Maria Santos - Gestão",
             "email": "maria.santos@belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "678.901.234-55",
             "telefone": "(91) 3242-1000",
             "tipo": TipoUsuario.GESTOR
@@ -464,7 +464,7 @@ def popular_usuarios(db: Session):
         {
             "nome": "Administrador",
             "email": "admin@belem.pa.gov.br",
-            "senha_hash": criar_hash_senha("senha123"),
+            "senha": criar_hash_senha("senha123"),
             "cpf": "789.012.345-66",
             "telefone": "(91) 3242-1001",
             "tipo": TipoUsuario.ADMIN

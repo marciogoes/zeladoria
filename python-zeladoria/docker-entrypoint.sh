@@ -52,6 +52,20 @@ mkdir -p uploads logs backups
 # ==========================================
 if [ "$POPULATE_DATA" = "true" ]; then
     echo "📊 Populando dados iniciais..."
+    python -c "
+from app.database.database import SessionLocal
+from app.models.usuario import Usuario
+db = SessionLocal()
+try:
+    db.query(Usuario).delete()
+    db.commit()
+    print('Usuarios limpos')
+except Exception as e:
+    print(f'Aviso limpeza: {e}')
+    db.rollback()
+finally:
+    db.close()
+" || true
     python seed.py || true
 fi
 
