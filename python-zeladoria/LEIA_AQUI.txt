@@ -1,0 +1,115 @@
+════════════════════════════════════════════════════════════
+  🚀 QUICK START - CATÁLOGO DE SERVIÇOS
+════════════════════════════════════════════════════════════
+
+📋 PASSO 1: Execute o menu principal
+
+   START.bat  ← DUPLO CLIQUE AQUI!
+
+════════════════════════════════════════════════════════════
+
+🎯 PRIMEIRA VEZ? Execute nesta ordem:
+
+   1. Duplo clique em: START.bat
+   2. Escolha opção: 1 (Testar Sistema)
+   3. Escolha opção: 2 (Criar Tabela)
+   4. Edite: app\seeds\seed_servicos.py
+      - Ajuste os IDs das secretarias
+   5. Escolha opção: 3 (Popular Banco)
+   6. Escolha opção: 5 (Ver Estatísticas)
+   7. Escolha opção: 8 (Iniciar API)
+
+════════════════════════════════════════════════════════════
+
+📁 ARQUIVOS .BAT DISPONÍVEIS
+
+   PRINCIPAL:
+   ─────────────────────────────────
+   START.bat                    ⭐ Menu principal (USE ESTE!)
+
+   SETUP (Execute uma vez):
+   ─────────────────────────────────
+   testar_sistema.bat           ✓ Diagnóstico completo
+   1_criar_tabela.bat           ✓ Criar tabela
+   2_popular_banco.bat          ✓ Popular com serviços
+
+   USO DIÁRIO:
+   ─────────────────────────────────
+   3_listar_servicos.bat        ✓ Listar todos
+   4_ver_stats.bat              ✓ Estatísticas
+   5_iniciar_api.bat            ✓ Servidor API
+
+   OUTROS:
+   ─────────────────────────────────
+   catalogo.bat                 ✓ Menu alternativo
+   buscar_servico.bat           ✓ Busca interativa
+   LEIA-ME.bat                  ✓ Instruções completas
+
+════════════════════════════════════════════════════════════
+
+⚠️  IMPORTANTE ANTES DE POPULAR O BANCO
+
+   Edite: app\seeds\seed_servicos.py
+
+   Linha ~682, ajuste os IDs:
+
+   secretarias_map = {
+       "SEURB": 1,   # ← Seu ID real
+       "SESAN": 2,   # ← Seu ID real
+       "SEMOB": 3,   # ← Seu ID real
+       "SEMMA": 4,   # ← Seu ID real
+       "SESMA": 5,   # ← Seu ID real
+   }
+
+   Para descobrir os IDs, execute no banco:
+   SELECT id, nome FROM secretarias;
+
+════════════════════════════════════════════════════════════
+
+🔧 TROUBLESHOOTING
+
+   ❌ "Python não é reconhecido"
+   → Instale Python ou adicione ao PATH
+
+   ❌ "Módulo não encontrado"
+   → Execute os .bat da pasta raiz do projeto
+
+   ❌ "Erro ao conectar banco"
+   → Verifique app\database\database.py
+
+   ❌ "IDs não existem"
+   → Ajuste os IDs em seed_servicos.py
+
+════════════════════════════════════════════════════════════
+
+✅ VALIDAÇÃO RÁPIDA
+
+   Execute em sequência:
+
+   1. testar_sistema.bat       (tudo deve passar ✓)
+   2. 1_criar_tabela.bat        (tabela criada ✓)
+   3. 2_popular_banco.bat       (100+ serviços ✓)
+   4. 4_ver_stats.bat           (ver números ✓)
+   5. 5_iniciar_api.bat         (servidor OK ✓)
+
+   Acesse: http://localhost:8000/docs
+
+════════════════════════════════════════════════════════════
+
+📚 DOCUMENTAÇÃO COMPLETA
+
+   docs\SCRIPTS_BATCH.md        - Guia dos scripts
+   docs\CATALOGO_SERVICOS.md    - Documentação técnica
+   docs\GUIA_USO_CATALOGO.md    - Tutorial completo
+   README_CATALOGO.md           - Resumo executivo
+
+════════════════════════════════════════════════════════════
+
+🎉 PRONTO PARA COMEÇAR!
+
+   Duplo clique em: START.bat
+
+════════════════════════════════════════════════════════════
+
+Sistema de Zeladoria Urbana - Belém/PA
+Versão 1.0 - Outubro 2025

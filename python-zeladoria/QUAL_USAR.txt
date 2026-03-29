@@ -1,0 +1,39 @@
+========================================
+  ARQUIVOS .BAT - QUAL USAR?
+========================================
+
+USE ESTES (SEM PROBLEMAS DE CODIFICACAO):
+==========================================
+
+INSTALAR.bat              - Instala dependencias
+MENU_SIMPLES.bat          - Menu principal
+criar_tabela_simples.bat  - Criar tabela
+popular_simples.bat       - Popular banco
+
+PASSO A PASSO:
+==========================================
+
+1. Execute: INSTALAR.bat
+   (Instala SQLAlchemy, FastAPI, etc)
+
+2. Execute: criar_tabela_simples.bat
+   (Cria a tabela no banco)
+
+3. Edite: app\seeds\seed_servicos.py
+   Linha ~682 - Ajuste os IDs das secretarias
+
+4. Execute: popular_simples.bat
+   (Popula com 100+ servicos)
+
+5. Execute: MENU_SIMPLES.bat
+   Opcao [5] - Ver estatisticas
+
+==========================================
+
+OU VIA PYTHON DIRETO:
+==========================================
+
+pip install sqlalchemy fastapi uvicorn pydantic pymysql
+python manage_catalogo.py
+
+========================================

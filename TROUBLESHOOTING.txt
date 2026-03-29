@@ -1,0 +1,356 @@
+╔══════════════════════════════════════════════════════════════════╗
+║                                                                  ║
+║     🔧 GUIA DE TROUBLESHOOTING - CATÁLOGO DE SERVIÇOS           ║
+║     Sistema de Zeladoria Urbana - Belém/PA                      ║
+║                                                                  ║
+╚══════════════════════════════════════════════════════════════════╝
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 1: Frontend não inicia
+═══════════════════════════════════════════════════════════════════
+
+❌ ERRO: "npm: command not found" ou "npm não é reconhecido"
+
+✅ SOLUÇÃO:
+   1. Instale Node.js: https://nodejs.org/
+   2. Reinicie o terminal
+   3. Teste: npm --version
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: Dependências não instaladas
+
+✅ SOLUÇÃO:
+   cd frontend
+   npm install
+   npm install lucide-react
+   npm run dev
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "Port 5173 already in use"
+
+✅ SOLUÇÃO:
+   Opção 1: Feche a aplicação que está usando a porta 5173
+   Opção 2: Use outra porta:
+   
+   cd frontend
+   npm run dev -- --port 3000
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 2: Backend não inicia
+═══════════════════════════════════════════════════════════════════
+
+❌ ERRO: "python: command not found"
+
+✅ SOLUÇÃO:
+   1. Instale Python 3.8+: https://python.org/
+   2. Durante instalação, marque "Add Python to PATH"
+   3. Reinicie o terminal
+   4. Teste: python --version
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "venv não encontrado"
+
+✅ SOLUÇÃO:
+   cd python-zeladoria
+   python -m venv venv
+   call venv\Scripts\activate
+   pip install -r requirements.txt
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "Port 8000 already in use"
+
+✅ SOLUÇÃO:
+   Opção 1: Feche a aplicação que está usando a porta 8000
+   
+   Opção 2: Use outra porta:
+   cd python-zeladoria
+   call venv\Scripts\activate
+   uvicorn main:app --reload --port 8001
+   
+   ⚠️ Se mudar a porta, atualize em frontend/src/App.jsx:
+   const API_BASE = 'http://localhost:8001';
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "ModuleNotFoundError: No module named 'fastapi'"
+
+✅ SOLUÇÃO:
+   cd python-zeladoria
+   call venv\Scripts\activate
+   pip install -r requirements.txt
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 3: Serviços não aparecem na interface
+═══════════════════════════════════════════════════════════════════
+
+❌ Catálogo vazio ou erro ao carregar
+
+✅ SOLUÇÃO:
+   1. Verifique se o backend está rodando:
+      Acesse: http://localhost:8000/docs
+   
+   2. Verifique se há dados no banco:
+      Execute: POPULAR_CATALOGO.bat
+   
+   3. Teste a API diretamente:
+      Execute: TESTAR_APIS.bat
+   
+   4. Verifique o console do navegador (F12)
+      Procure por erros de CORS ou conexão
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "CORS policy" no console do navegador
+
+✅ SOLUÇÃO:
+   Adicione no arquivo python-zeladoria/main.py:
+   
+   from fastapi.middleware.cors import CORSMiddleware
+   
+   app.add_middleware(
+       CORSMiddleware,
+       allow_origins=["http://localhost:5173"],
+       allow_credentials=True,
+       allow_methods=["*"],
+       allow_headers=["*"],
+   )
+
+───────────────────────────────────────────────────────────────────
+
+❌ ERRO: "Failed to fetch" ou "Network Error"
+
+✅ SOLUÇÃO:
+   1. Verifique se o backend está rodando
+   2. Verifique a URL em App.jsx (deve ser http://localhost:8000)
+   3. Teste no navegador: http://localhost:8000/api/servicos
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 4: Ícones não aparecem
+═══════════════════════════════════════════════════════════════════
+
+❌ Ícones (lucide-react) não renderizam
+
+✅ SOLUÇÃO:
+   cd frontend
+   npm install lucide-react
+   npm run dev
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 5: Filtros não funcionam
+═══════════════════════════════════════════════════════════════════
+
+❌ Filtros não retornam resultados
+
+✅ SOLUÇÃO:
+   1. Verifique se há serviços no banco
+   2. Teste com filtro vazio primeiro
+   3. Verifique no console se há erros
+   4. Teste a API diretamente:
+      http://localhost:8000/api/servicos?categoria=Iluminação
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 6: Modal não abre
+═══════════════════════════════════════════════════════════════════
+
+❌ Ao clicar no serviço, nada acontece
+
+✅ SOLUÇÃO:
+   1. Verifique o console do navegador (F12)
+   2. Verifique se o evento onClick está funcionando
+   3. Limpe o cache do navegador (Ctrl+Shift+Del)
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 7: SLA não calcula corretamente
+═══════════════════════════════════════════════════════════════════
+
+❌ Indicador de SLA sempre mostra "Sem prazo"
+
+✅ SOLUÇÃO:
+   1. Verifique se os chamados têm prazo_sla definido
+   2. Verifique o formato da data (deve ser ISO 8601)
+   3. Execute: POPULAR_CATALOGO.bat para criar dados válidos
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 8: Banco de dados corrompido ou com erro
+═══════════════════════════════════════════════════════════════════
+
+❌ Erros ao consultar o banco
+
+✅ SOLUÇÃO:
+   1. Backup do banco atual (se tiver dados importantes):
+      copy python-zeladoria\zeladoria.db zeladoria_backup.db
+   
+   2. Recriar banco:
+      cd python-zeladoria
+      del zeladoria.db
+      python popular_catalogo_exemplo.py
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 9: Performance lenta
+═══════════════════════════════════════════════════════════════════
+
+❌ Interface ou API muito lenta
+
+✅ SOLUÇÃO:
+   1. Verifique quantos registros existem no banco
+   2. Use paginação na listagem
+   3. Adicione índices no banco de dados
+   4. Verifique se há queries N+1
+
+
+═══════════════════════════════════════════════════════════════════
+PROBLEMA 10: Autenticação não funciona
+═══════════════════════════════════════════════════════════════════
+
+❌ Não consegue fazer login ou acessar
+
+✅ SOLUÇÃO:
+   1. A versão atual usa usuário mockado
+   2. Para autenticação real, implemente JWT no backend
+   3. Veja exemplos em:
+      python-zeladoria/app/routes/auth.py
+
+
+═══════════════════════════════════════════════════════════════════
+FERRAMENTAS DE DIAGNÓSTICO
+═══════════════════════════════════════════════════════════════════
+
+🔍 VERIFICAR_SISTEMA.bat
+   → Verifica instalação e dependências
+
+🧪 TESTAR_APIS.bat
+   → Testa todas as APIs do catálogo
+
+📋 POPULAR_CATALOGO.bat
+   → Popula banco com dados de exemplo
+
+📊 SETUP_COMPLETO.bat
+   → Faz setup completo do sistema
+
+
+═══════════════════════════════════════════════════════════════════
+LOGS E DEBUG
+═══════════════════════════════════════════════════════════════════
+
+🔍 Onde encontrar logs:
+
+Frontend (React):
+   • Console do navegador (F12 → Console)
+   • Network tab para ver requisições HTTP
+
+Backend (FastAPI):
+   • Terminal onde o backend está rodando
+   • Adicione print() para debug
+   • Use logging para logs persistentes
+
+
+═══════════════════════════════════════════════════════════════════
+COMANDOS ÚTEIS
+═══════════════════════════════════════════════════════════════════
+
+📦 Reinstalar dependências:
+   cd frontend
+   rmdir /s /q node_modules
+   npm install
+
+🔧 Recriar ambiente virtual Python:
+   cd python-zeladoria
+   rmdir /s /q venv
+   python -m venv venv
+   call venv\Scripts\activate
+   pip install -r requirements.txt
+
+🗑️ Limpar cache do npm:
+   npm cache clean --force
+
+🔄 Resetar banco de dados:
+   cd python-zeladoria
+   del zeladoria.db
+   python popular_catalogo_exemplo.py
+
+
+═══════════════════════════════════════════════════════════════════
+VERIFICAÇÕES RÁPIDAS
+═══════════════════════════════════════════════════════════════════
+
+✅ CHECKLIST DE VERIFICAÇÃO:
+
+□ Node.js instalado? (node --version)
+□ Python instalado? (python --version)
+□ Pasta frontend existe?
+□ Pasta python-zeladoria existe?
+□ Dependências do frontend instaladas? (frontend/node_modules)
+□ Ambiente virtual Python criado? (python-zeladoria/venv)
+□ Banco de dados existe? (python-zeladoria/zeladoria.db)
+□ Banco tem dados? (Execute POPULAR_CATALOGO.bat)
+□ Backend rodando? (http://localhost:8000/docs)
+□ Frontend rodando? (http://localhost:5173)
+□ CORS configurado?
+□ Sem erros no console?
+
+
+═══════════════════════════════════════════════════════════════════
+SUPORTE
+═══════════════════════════════════════════════════════════════════
+
+📚 Documentação:
+   • README_CATALOGO.md
+   • GUIA_CATALOGO_SERVICOS.md
+   • RESUMO_IMPLEMENTACAO.txt
+
+🔧 Scripts úteis:
+   • VERIFICAR_SISTEMA.bat
+   • SETUP_COMPLETO.bat
+   • TESTAR_APIS.bat
+
+🌐 Links úteis:
+   • FastAPI Docs: https://fastapi.tiangolo.com/
+   • React Docs: https://react.dev/
+   • Lucide Icons: https://lucide.dev/
+
+
+═══════════════════════════════════════════════════════════════════
+DICAS FINAIS
+═══════════════════════════════════════════════════════════════════
+
+💡 Sempre verifique:
+   1. Backend está rodando antes do frontend
+   2. Banco de dados tem dados
+   3. CORS está configurado
+   4. Portas 5173 e 8000 estão livres
+   5. Console do navegador não tem erros
+
+🎯 Para desenvolvimento:
+   1. Use React DevTools
+   2. Use FastAPI /docs para testar APIs
+   3. Mantenha ambos terminais abertos
+   4. Salve alterações frequentemente
+
+🚀 Para produção:
+   1. Build do frontend: npm run build
+   2. Configure servidor (nginx, apache)
+   3. Use PostgreSQL em vez de SQLite
+   4. Configure variáveis de ambiente
+   5. Implemente autenticação JWT
+
+
+══════════════════════════════════════════════════════════════════
+🎉 Se seguiu todos os passos e ainda tem problema, verifique:
+   1. Versões do Node.js e Python
+   2. Permissões de arquivos
+   3. Firewall/Antivírus bloqueando portas
+   4. Espaço em disco disponível
+══════════════════════════════════════════════════════════════════

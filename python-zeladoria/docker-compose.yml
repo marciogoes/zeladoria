@@ -1,0 +1,228 @@
+# ============================================
+# DOCKER COMPOSE - SISTEMA DE ZELADORIA URBANA
+# Belém do Pará - Versão 2.0.0
+# ============================================
+
+version: '3.8'
+
+services:
+  # ==========================================
+  # APLICAÇÃO PRINCIPAL (BACKEND + FRONTEND)
+  # ==========================================
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: zeladoria-app
+    restart: unless-stopped
+    ports:
+      - "8001:8001"
+    environment:
+      - DATABASE_URL=postgresql://zeladoria:senha123@db:5432/zeladoria
+      - SECRET_KEY=${SECRET_KEY:-sua-chave-secreta-mude-em-producao}
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - DEBUG=${DEBUG:-False}
+      - ALLOWED_ORIGINS=http://localhost:8001,http://localhost
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    volumes:
+      - ./uploads:/app/uploads
+      - ./logs:/app/logs
+      - ./backups:/app/backups
+    depends_on:
+      - db
+      - redis
+    networks:
+      - zeladoria-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ==========================================
+  # BANCO DE DADOS POSTGRESQL
+  # ==========================================
+  db:
+    image: postgres:15-alpine
+    container_name: zeladoria-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=zeladoria
+      - POSTGRES_USER=zeladoria
+      - POSTGRES_PASSWORD=senha123
+      - PGDATA=/var/lib/postgresql/data/pgdata
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./backups:/backups
+    ports:
+      - "5432:5432"
+    networks:
+      - zeladoria-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U zeladoria"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ==========================================
+  # REDIS (CACHE)
+  # ==========================================
+  redis:
+    image: redis:7-alpine
+    container_name: zeladoria-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    networks:
+      - zeladoria-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+
+  # ==========================================
+  # NGINX (REVERSE PROXY - OPCIONAL)
+  # ==========================================
+  nginx:
+    image: nginx:alpine
+    container_name: zeladoria-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+      - ./logs/nginx:/var/log/nginx
+    depends_on:
+      - app
+    networks:
+      - zeladoria-network
+    profiles:
+      - production
+
+  # ==========================================
+  # PGADMIN (ADMINISTRAÇÃO DE BANCO - DEV)
+  # ==========================================
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: zeladoria-pgadmin
+    restart: unless-stopped
+    environment:
+      - PGADMIN_DEFAULT_EMAIL=admin@zeladoria.local
+      - PGADMIN_DEFAULT_PASSWORD=admin123
+      - PGADMIN_LISTEN_PORT=5050
+    ports:
+      - "5050:5050"
+    volumes:
+      - pgadmin-data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - zeladoria-network
+    profiles:
+      - development
+
+  # ==========================================
+  # BACKUP AUTOMÁTICO (CRON JOB)
+  # ==========================================
+  backup:
+    image: postgres:15-alpine
+    container_name: zeladoria-backup
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=zeladoria
+      - POSTGRES_USER=zeladoria
+      - POSTGRES_PASSWORD=senha123
+      - POSTGRES_HOST=db
+      - BACKUP_RETENTION_DAYS=7
+    volumes:
+      - ./backups:/backups
+      - ./scripts/backup.sh:/backup.sh:ro
+    depends_on:
+      - db
+    networks:
+      - zeladoria-network
+    command: >
+      sh -c "
+        apk add --no-cache dcron &&
+        echo '0 2 * * * /backup.sh' | crontab - &&
+        crond -f -l 2
+      "
+    profiles:
+      - production
+
+# ==========================================
+# VOLUMES
+# ==========================================
+volumes:
+  postgres-data:
+    driver: local
+  redis-data:
+    driver: local
+  pgadmin-data:
+    driver: local
+
+# ==========================================
+# NETWORKS
+# ==========================================
+networks:
+  zeladoria-network:
+    driver: bridge
+
+# ==========================================
+# COMANDOS ÚTEIS
+# ==========================================
+#
+# Iniciar todos os serviços:
+#   docker-compose up -d
+#
+# Iniciar apenas em desenvolvimento (com pgAdmin):
+#   docker-compose --profile development up -d
+#
+# Iniciar em produção (com Nginx e Backup):
+#   docker-compose --profile production up -d
+#
+# Parar todos os serviços:
+#   docker-compose down
+#
+# Parar e remover volumes (CUIDADO - apaga dados):
+#   docker-compose down -v
+#
+# Ver logs:
+#   docker-compose logs -f
+#   docker-compose logs -f app
+#   docker-compose logs -f db
+#
+# Executar comando dentro do container:
+#   docker-compose exec app bash
+#   docker-compose exec db psql -U zeladoria
+#
+# Backup manual do banco:
+#   docker-compose exec db pg_dump -U zeladoria zeladoria > backup.sql
+#
+# Restaurar backup:
+#   docker-compose exec -T db psql -U zeladoria zeladoria < backup.sql
+#
+# Reiniciar serviço específico:
+#   docker-compose restart app
+#
+# Rebuild da aplicação:
+#   docker-compose up -d --build app
+#
+# Ver status dos containers:
+#   docker-compose ps
+#
+# Ver uso de recursos:
+#   docker stats
+#
+# Limpar recursos não utilizados:
+#   docker system prune -a
+#
+# ==========================================

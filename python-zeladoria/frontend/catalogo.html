@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Catálogo de Serviços - Prefeitura de Belém</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background: #f8f9fa; color: #212529; line-height: 1.6; }
+        .container { max-width: 1400px; margin: 0 auto; padding: 0 20px; }
+        
+        /* NAVBAR */
+        .navbar { background: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); position: sticky; top: 0; z-index: 100; }
+        .navbar .container { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; }
+        .navbar-brand { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 600; }
+        .navbar-menu { display: flex; gap: 20px; }
+        .nav-link { text-decoration: none; color: #6c757d; padding: 8px 16px; border-radius: 6px; transition: all 0.3s; }
+        .nav-link:hover { background: #e9ecef; color: #0066CC; }
+        .nav-link.active { background: #0066CC; color: white; }
+        
+        /* HERO */
+        .hero { background: linear-gradient(135deg, #0066CC 0%, #004C99 100%); color: white; padding: 60px 0; text-align: center; }
+        .hero h1 { font-size: 42px; font-weight: 700; margin-bottom: 16px; }
+        .hero p { font-size: 18px; opacity: 0.95; }
+        
+        /* STATS */
+        .stats { margin: -40px 0 40px; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px; }
+        .stat-card { background: white; border-radius: 12px; padding: 30px; text-align: center; box-shadow: 0 10px 30px rgba(0,0,0,0.1); transition: transform 0.3s; }
+        .stat-card:hover { transform: translateY(-5px); }
+        .stat-icon { font-size: 48px; margin-bottom: 12px; }
+        .stat-value { font-size: 36px; font-weight: 700; color: #0066CC; margin-bottom: 8px; }
+        .stat-label { font-size: 14px; color: #6c757d; }
+        
+        /* FILTROS */
+        .filtros { background: white; padding: 30px; margin-bottom: 40px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        .filtros-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr auto; gap: 15px; margin-bottom: 20px; }
+        .search-box { position: relative; }
+        .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 20px; color: #adb5bd; }
+        .search-input { width: 100%; padding: 12px 16px 12px 48px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 15px; }
+        .search-input:focus { outline: none; border-color: #0066CC; }
+        select { width: 100%; padding: 12px 16px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 14px; cursor: pointer; }
+        .btn-limpar { padding: 12px 24px; background: #e9ecef; border: 2px solid #dee2e6; border-radius: 8px; font-weight: 600; cursor: pointer; white-space: nowrap; }
+        .btn-limpar:hover { background: #dee2e6; }
+        
+        /* SERVIÇOS */
+        .servicos { padding-bottom: 60px; }
+        .servicos-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
+        .servicos-header h2 { font-size: 28px; font-weight: 700; }
+        .contador { background: #0066CC; color: white; padding: 8px 16px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+        .servicos-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 24px; }
+        .servico-card { background: white; border-radius: 12px; padding: 24px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.3s; cursor: pointer; border: 2px solid transparent; }
+        .servico-card:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.15); border-color: #0066CC; }
+        .servico-header { display: flex; justify-content: space-between; margin-bottom: 16px; }
+        .servico-codigo { background: #e9ecef; color: #495057; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; font-family: monospace; }
+        .badge-status { padding: 4px 10px; border-radius: 12px; font-size: 11px; font-weight: 600; text-transform: uppercase; }
+        .badge-status.ativo { background: #d4edda; color: #155724; }
+        .servico-titulo { font-size: 18px; font-weight: 600; margin-bottom: 8px; line-height: 1.3; }
+        .servico-secretaria { display: flex; align-items: center; gap: 8px; color: #6c757d; font-size: 13px; margin-bottom: 12px; }
+        .servico-descricao { color: #6c757d; font-size: 14px; line-height: 1.5; margin-bottom: 16px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .servico-categorias { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+        .categoria-tag { background: #f8f9fa; color: #495057; padding: 4px 12px; border-radius: 6px; font-size: 12px; font-weight: 500; }
+        .servico-footer { display: flex; justify-content: space-between; align-items: center; padding-top: 16px; border-top: 1px solid #e9ecef; }
+        .sla-info { display: flex; flex-direction: column; }
+        .sla-label { font-size: 11px; color: #6c757d; margin-bottom: 4px; }
+        .sla-valor { font-size: 16px; font-weight: 700; color: #212529; }
+        .prioridade-badge { padding: 6px 12px; border-radius: 6px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .prioridade-badge.emergencial { background: #dc3545; color: white; }
+        .prioridade-badge.alta { background: #fd7e14; color: white; }
+        .prioridade-badge.media { background: #ffc107; color: #212529; }
+        .prioridade-badge.baixa { background: #28a745; color: white; }
+        .prioridade-badge.agendavel { background: #6c757d; color: white; }
+        
+        /* MODAL */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; border-radius: 16px; max-width: 700px; width: 90%; max-height: 90vh; overflow-y: auto; box-shadow: 0 20px 60px rgba(0,0,0,0.3); }
+        .modal-header { padding: 32px; border-bottom: 1px solid #e9ecef; position: relative; }
+        .modal-close { position: absolute; top: 20px; right: 20px; background: #f8f9fa; border: none; width: 36px; height: 36px; border-radius: 50%; font-size: 20px; cursor: pointer; }
+        .modal-body { padding: 32px; }
+        .modal-footer { padding: 24px 32px; border-top: 1px solid #e9ecef; display: flex; gap: 12px; justify-content: flex-end; }
+        .btn-primary, .btn-secondary { padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; border: none; }
+        .btn-primary { background: #0066CC; color: white; }
+        .btn-secondary { background: #e9ecef; color: #495057; }
+        
+        /* EMPTY STATE */
+        .empty-state { text-align: center; padding: 80px 20px; display: none; }
+        .empty-state.show { display: block; }
+        .empty-icon { font-size: 80px; opacity: 0.3; margin-bottom: 20px; }
+        
+        /* LOADING */
+        .loading { text-align: center; padding: 60px 20px; }
+        .spinner { border: 4px solid #e9ecef; border-top: 4px solid #0066CC; border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* RESPONSIVE */
+        @media (max-width: 1200px) { .filtros-grid { grid-template-columns: 1fr; } }
+        @media (max-width: 768px) { 
+            .hero h1 { font-size: 32px; }
+            .servicos-grid { grid-template-columns: 1fr; }
+            .navbar-menu { gap: 10px; }
+            .nav-link { font-size: 14px; padding: 6px 12px; }
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="container">
+            <div class="navbar-brand"><span style="font-size: 2rem;">🏛️</span><span>Catálogo de Serviços</span></div>
+            <div class="navbar-menu">
+                <a href="index.html" class="nav-link">Início</a>
+                <a href="dashboard.html" class="nav-link">Dashboard</a>
+                <a href="#" class="nav-link active">Catálogo</a>
+            </div>
+        </div>
+    </nav>
+
+    <section class="hero">
+        <div class="container">
+            <h1>📚 Catálogo Completo de Serviços Públicos</h1>
+            <p>Todos os serviços oferecidos pelas Secretarias da Prefeitura de Belém</p>
+        </div>
+    </section>
+
+    <section class="stats">
+        <div class="container">
+            <div class="stats-grid">
+                <div class="stat-card"><div class="stat-icon">🏛️</div><div class="stat-value" id="total-secretarias">--</div><div class="stat-label">Secretarias</div></div>
+                <div class="stat-card"><div class="stat-icon">📋</div><div class="stat-value" id="total-servicos">--</div><div class="stat-label">Serviços</div></div>
+                <div class="stat-card"><div class="stat-icon">⚡</div><div class="stat-value" id="servicos-emergenciais">--</div><div class="stat-label">Emergenciais</div></div>
+                <div class="stat-card"><div class="stat-icon">⏱️</div><div class="stat-value" id="sla-medio">--</div><div class="stat-label">SLA Médio</div></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="filtros">
+        <div class="container">
+            <div class="filtros-grid">
+                <div class="search-box"><span class="search-icon">🔍</span><input type="text" id="busca" class="search-input" placeholder="Buscar serviço..."></div>
+                <select id="filtro-secretaria"><option value="">Todas as Secretarias</option></select>
+                <select id="filtro-prioridade"><option value="">Todas as Prioridades</option><option value="emergencial">⚠️ Emergencial</option><option value="alta">🔴 Alta</option><option value="media">🟡 Média</option><option value="baixa">🟢 Baixa</option><option value="agendavel">📅 Agendável</option></select>
+                <select id="filtro-status"><option value="">Todos os Status</option><option value="ativo">✅ Ativos</option></select>
+                <button class="btn-limpar" onclick="limparFiltros()">🔄 Limpar</button>
+            </div>
+            <div style="display: flex; align-items: center; gap: 12px;"><label>Ordenar:</label><select id="ordenacao" onchange="aplicarOrdenacao()"><option value="nome-asc">Nome (A-Z)</option><option value="nome-desc">Nome (Z-A)</option><option value="sla-asc">SLA (Menor)</option><option value="sla-desc">SLA (Maior)</option></select></div>
+        </div>
+    </section>
+
+    <section class="servicos">
+        <div class="container">
+            <div class="servicos-header"><h2>Serviços Disponíveis</h2><span id="contador" class="contador">0 serviços</span></div>
+            <div id="servicos-grid" class="servicos-grid"><div class="loading"><div class="spinner"></div><p>Carregando serviços...</p></div></div>
+            <div id="empty-state" class="empty-state"><div class="empty-icon">🔍</div><h3>Nenhum serviço encontrado</h3><p>Tente ajustar os filtros</p></div>
+        </div>
+    </section>
+
+    <div id="modal" class="modal" onclick="if(event.target === this) fecharModal()">
+        <div class="modal-content">
+            <div class="modal-header">
+                <button class="modal-close" onclick="fecharModal()">✕</button>
+                <div id="modal-codigo" class="servico-codigo">--</div>
+                <h2 id="modal-titulo">Serviço</h2>
+                <div id="modal-secretaria" style="color: #6c757d; margin-top: 8px;">--</div>
+            </div>
+            <div class="modal-body">
+                <p id="modal-descricao">--</p>
+                <hr style="margin: 20px 0; border: none; border-top: 1px solid #e9ecef;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <div><strong>SLA:</strong><div id="modal-sla">--</div></div>
+                    <div><strong>Prioridade:</strong><div id="modal-prioridade">--</div></div>
+                    <div><strong>Categoria:</strong><div id="modal-categoria">--</div></div>
+                    <div><strong>Subcategoria:</strong><div id="modal-subcategoria">--</div></div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="fecharModal()">Fechar</button>
+                <button class="btn-primary" onclick="alert('Redirecionar para criar chamado')">📝 Solicitar Serviço</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        console.log('🚀 Catálogo Completo carregado!');
+        
+        // ========================================
+        // 🏛️ SECRETARIAS DA PREFEITURA DE BELÉM
+        // ========================================
+        const secretarias = [
+            { id: 1, sigla: 'SEURB', nome: 'Secretaria de Urbanismo', icone: '🏗️' },
+            { id: 2, sigla: 'SESAN', nome: 'Secretaria de Saneamento', icone: '♻️' },
+            { id: 3, sigla: 'SECON', nome: 'Secretaria de Economia', icone: '💼' },
+            { id: 4, sigla: 'SESMA', nome: 'Secretaria de Saúde', icone: '🏥' },
+            { id: 5, sigla: 'SEMEC', nome: 'Secretaria de Educação', icone: '📚' },
+            { id: 6, sigla: 'SEMAJ', nome: 'Secretaria de Meio Ambiente', icone: '🌳' },
+            { id: 7, sigla: 'SEMDEC', nome: 'Secretaria de Defesa Civil', icone: '🚨' },
+            { id: 8, sigla: 'SEMDUH', nome: 'Secretaria de Habitação', icone: '🏘️' },
+            { id: 9, sigla: 'SETRA', nome: 'Secretaria de Trânsito', icone: '🚦' },
+            { id: 10, sigla: 'FUNPAPA', nome: 'Fundação Papa João XXIII (Assist. Social)', icone: '🤝' },
+            { id: 11, sigla: 'SECULT', nome: 'Secretaria de Cultura', icone: '🎭' },
+            { id: 12, sigla: 'SETEL', nome: 'Secretaria de Telecomunicações', icone: '📡' }
+        ];
+
+        // ========================================
+        // 📋 CATÁLOGO COMPLETO DE SERVIÇOS
+        // ========================================
+        const servicos = [
+            // ==================== SEURB - URBANISMO ====================
+            { id: 1, codigo: 'SEURB-001', nome: 'Reparo de Iluminação Pública', descricao: 'Manutenção, reparo ou substituição de postes e luminárias de iluminação pública', categoria: 'Iluminação Pública', subcategoria: 'Manutenção Corretiva', secretaria_id: 1, sla_horas: 48, prioridade: 'alta', status: 'ativo' },
+            { id: 2, codigo: 'SEURB-002', nome: 'Instalação de Nova Iluminação', descricao: 'Solicitação de instalação de iluminação pública em logradouro sem cobertura', categoria: 'Iluminação Pública', subcategoria: 'Instalação', secretaria_id: 1, sla_horas: 720, prioridade: 'agendavel', status: 'ativo' },
+            { id: 3, codigo: 'SEURB-003', nome: 'Tapa-buraco em Via Pública', descricao: 'Correção emergencial de buracos e afundamentos em vias públicas asfaltadas', categoria: 'Pavimentação', subcategoria: 'Emergencial', secretaria_id: 1, sla_horas: 24, prioridade: 'emergencial', status: 'ativo' },
+            { id: 4, codigo: 'SEURB-004', nome: 'Recapeamento Asfáltico', descricao: 'Recuperação de pavimento asfáltico deteriorado em vias públicas', categoria: 'Pavimentação', subcategoria: 'Manutenção', secretaria_id: 1, sla_horas: 1440, prioridade: 'media', status: 'ativo' },
+            { id: 5, codigo: 'SEURB-005', nome: 'Limpeza de Bueiro e Boca de Lobo', descricao: 'Desobstrução e limpeza de sistema de drenagem urbana', categoria: 'Drenagem', subcategoria: 'Manutenção', secretaria_id: 1, sla_horas: 72, prioridade: 'alta', status: 'ativo' },
+            { id: 6, codigo: 'SEURB-006', nome: 'Reparo de Calçada', descricao: 'Conserto de calçadas públicas danificadas ou com obstáculos', categoria: 'Calçadas', subcategoria: 'Manutenção', secretaria_id: 1, sla_horas: 240, prioridade: 'baixa', status: 'ativo' },
+            { id: 7, codigo: 'SEURB-007', nome: 'Remoção de Entulho em Via Pública', descricao: 'Retirada de entulho e material de construção descartado irregularmente', categoria: 'Limpeza Urbana', subcategoria: 'Remoção', secretaria_id: 1, sla_horas: 96, prioridade: 'media', status: 'ativo' },
+            { id: 8, codigo: 'SEURB-008', nome: 'Poda de Árvore em Área Pública', descricao: 'Poda ou remoção de árvores que ofereçam risco ou obstrução', categoria: 'Arborização', subcategoria: 'Manutenção', secretaria_id: 1, sla_horas: 168, prioridade: 'baixa', status: 'ativo' },
+            { id: 9, codigo: 'SEURB-009', nome: 'Plantio de Árvores', descricao: 'Solicitação de plantio de mudas em áreas públicas conforme plano diretor', categoria: 'Arborização', subcategoria: 'Plantio', secretaria_id: 1, sla_horas: 720, prioridade: 'agendavel', status: 'ativo' },
+            { id: 10, codigo: 'SEURB-010', nome: 'Fiscalização de Obra Irregular', descricao: 'Denúncia de construção irregular ou sem autorização', categoria: 'Fiscalização', subcategoria: 'Denúncia', secretaria_id: 1, sla_horas: 120, prioridade: 'media', status: 'ativo' },
+
+            // ==================== SESAN - SANEAMENTO ====================
+            { id: 11, codigo: 'SESAN-001', nome: 'Limpeza de Terreno Baldio', descricao: 'Limpeza e remoção de mato, lixo e entulho em terrenos abandonados', categoria: 'Limpeza Urbana', subcategoria: 'Terrenos', secretaria_id: 2, sla_horas: 120, prioridade: 'media', status: 'ativo' },
+            { id: 12, codigo: 'SESAN-002', nome: 'Coleta de Lixo Irregular', descricao: 'Recolhimento especial de lixo acumulado ou descartado irregularmente', categoria: 'Coleta de Resíduos', subcategoria: 'Coleta Especial', secretaria_id: 2, sla_horas: 72, prioridade: 'alta', status: 'ativo' },
+            { id: 13, codigo: 'SESAN-003', nome: 'Coleta de Entulho', descricao: 'Agendamento de coleta de entulho residencial (até 1m³)', categoria: 'Coleta de Resíduos', subcategoria: 'Entulho', secretaria_id: 2, sla_horas: 168, prioridade: 'agendavel', status: 'ativo' },
+            { id: 14, codigo: 'SESAN-004', nome: 'Coleta de Móveis Velhos', descricao: 'Recolhimento de móveis e objetos volumosos inutilizados', categoria: 'Coleta de Resíduos', subcategoria: 'Volumosos', secretaria_id: 2, sla_horas: 168, prioridade: 'agendavel', status: 'ativo' },
+            { id: 15, codigo: 'SESAN-005', nome: 'Dedetização de Imóvel Público', descricao: 'Controle de pragas e vetores em áreas públicas', categoria: 'Controle de Pragas', subcategoria: 'Dedetização', secretaria_id: 2, sla_horas: 96, prioridade: 'alta', status: 'ativo' },
+            { id: 16, codigo: 'SESAN-006', nome: 'Capina de Via Pública', descricao: 'Roçagem e limpeza de mato em canteiros e vias públicas', categoria: 'Limpeza Urbana', subcategoria: 'Capina', secretaria_id: 2, sla_horas: 240, prioridade: 'baixa', status: 'ativo' },
+            { id: 17, codigo: 'SESAN-007', nome: 'Limpeza de Canal e Igarapé', descricao: 'Desassoreamento e limpeza de canais de drenagem natural', categoria: 'Drenagem', subcategoria: 'Canais', secretaria_id: 2, sla_horas: 336, prioridade: 'media', status: 'ativo' },
+            { id: 18, codigo: 'SESAN-008', nome: 'Recolhimento de Animal Morto', descricao: 'Remoção de animal morto em via pública', categoria: 'Limpeza Urbana', subcategoria: 'Emergencial', secretaria_id: 2, sla_horas: 24, prioridade: 'emergencial', status: 'ativo' },
+
+            // ==================== SECON - ECONOMIA ====================
+            { id: 19, codigo: 'SECON-001', nome: 'Emissão de Alvará de Funcionamento', descricao: 'Solicitação de alvará para abertura de estabelecimento comercial', categoria: 'Licenciamento', subcategoria: 'Alvará', secretaria_id: 3, sla_horas: 240, prioridade: 'agendavel', status: 'ativo' },
+            { id: 20, codigo: 'SECON-002', nome: 'Renovação de Alvará', descricao: 'Renovação anual de alvará de funcionamento', categoria: 'Licenciamento', subcategoria: 'Renovação', secretaria_id: 3, sla_horas: 168, prioridade: 'media', status: 'ativo' },
+            { id: 21, codigo: 'SECON-003', nome: 'Fiscalização de Comércio Irregular', descricao: 'Denúncia de estabelecimento funcionando sem alvará ou licença', categoria: 'Fiscalização', subcategoria: 'Denúncia', secretaria_id: 3, sla_horas: 96, prioridade: 'media', status: 'ativo' },
+            { id: 22, codigo: 'SECON-004', nome: 'Emissão de ISS', descricao: 'Cadastro e emissão de nota fiscal de serviço', categoria: 'Tributos', subcategoria: 'ISS', secretaria_id: 3, sla_horas: 72, prioridade: 'media', status: 'ativo' },
+            { id: 23, codigo: 'SECON-005', nome: 'Emissão de Certidão Negativa', descricao: 'Emissão de certidão de débitos tributários', categoria: 'Certidões', subcategoria: 'Tributos', secretaria_id: 3, sla_horas: 48, prioridade: 'media', status: 'ativo' },
+            { id: 24, codigo: 'SECON-006', nome: 'Parcelamento de IPTU', descricao: 'Solicitação de parcelamento de dívida de IPTU', categoria: 'Tributos', subcategoria: 'IPTU', secretaria_id: 3, sla_horas: 120, prioridade: 'agendavel', status: 'ativo' },
+            { id: 25, codigo: 'SECON-007', nome: 'Autorização para Evento Comercial', descricao: 'Licença para realização de evento comercial em área pública', categoria: 'Licenciamento', subcategoria: 'Eventos', secretaria_id: 3, sla_horas: 336, prioridade: 'agendavel', status: 'ativo' },
+
+            // ==================== SESMA - SAÚDE ====================
+            { id: 26, codigo: 'SESMA-001', nome: 'Agendamento de Consulta Básica', descricao: 'Agendamento de consulta médica em Unidade Básica de Saúde', categoria: 'Atendimento', subcategoria: 'Consulta', secretaria_id: 4, sla_horas: 168, prioridade: 'media', status: 'ativo' },
+            { id: 27, codigo: 'SESMA-002', nome: 'Vacinação', descricao: 'Agendamento para vacinação conforme calendário nacional', categoria: 'Prevenção', subcategoria: 'Vacina', secretaria_id: 4, sla_horas: 48, prioridade: 'alta', status: 'ativo' },
+            { id: 28, codigo: 'SESMA-003', nome: 'Controle de Zoonoses', descricao: 'Controle de animais sinantrópicos (morcegos, ratos, pombos)', categoria: 'Vigilância Sanitária', subcategoria: 'Zoonoses', secretaria_id: 4, sla_horas: 96, prioridade: 'alta', status: 'ativo' },
+            { id: 29, codigo: 'SESMA-004', nome: 'Fiscalização Sanitária', descricao: 'Denúncia de irregularidade sanitária em estabelecimento', categoria: 'Vigilância Sanitária', subcategoria: 'Fiscalização', secretaria_id: 4, sla_horas: 72, prioridade: 'alta', status: 'ativo' },
+            { id: 30, codigo: 'SESMA-005', nome: 'Emissão de Cartão SUS', descricao: 'Solicitação de Cartão Nacional de Saúde', categoria: 'Cadastro', subcategoria: 'Documentação', secretaria_id: 4, sla_horas: 96, prioridade: 'media', status: 'ativo' },
+            { id: 31, codigo: 'SESMA-006', nome: 'Agendamento de Exame', descricao: 'Agendamento de exames laboratoriais e de imagem', categoria: 'Atendimento', subcategoria: 'Exames', secretaria_id: 4, sla_horas: 240, prioridade: 'media', status: 'ativo' },
+            { id: 32, codigo: 'SESMA-007', nome: 'Remoção de Paciente', descricao: 'Solicitação de ambulância para transporte não emergencial', categoria: 'Transporte', subcategoria: 'Remoção', secretaria_id: 4, sla_horas: 48, prioridade: 'alta', status: 'ativo' },
+
+            // ==================== SEMEC - EDUCAÇÃO ====================
+            { id: 33, codigo: 'SEMEC-001', nome: 'Matrícula Escolar', descricao: 'Solicitação de matrícula em escola municipal', categoria: 'Matrícula', subcategoria: 'Inicial', secretaria_id: 5, sla_horas: 240, prioridade: 'agendavel', status: 'ativo' },
+            { id: 34, codigo: 'SEMEC-002', nome: 'Transferência Escolar', descricao: 'Solicitação de transferência entre escolas municipais', categoria: 'Matrícula', subcategoria: 'Transferência', secretaria_id: 5, sla_horas: 168, prioridade: 'media', status: 'ativo' },
+            { id: 35, codigo: 'SEMEC-003', nome: 'Solicitação de Vaga em Creche', descricao: 'Cadastro para vaga em creche municipal', categoria: 'Matrícula', subcategoria: 'Educação Infantil', secretaria_id: 5, sla_horas: 720, prioridade: 'agendavel', status: 'ativo' },
+            { id: 36, codigo: 'SEMEC-004', nome: 'Declaração de Escolaridade', descricao: 'Emissão de declaração de matrícula ou conclusão', categoria: 'Documentação', subcategoria: 'Declaração', secretaria_id: 5, sla_horas: 48, prioridade: 'media', status: 'ativo' },
+            { id: 37, codigo: 'SEMEC-005', nome: 'Reparo em Escola', descricao: 'Solicitação de manutenção predial em escola municipal', categoria: 'Manutenção', subcategoria: 'Estrutura', secretaria_id: 5, sla_horas: 168, prioridade: 'alta', status: 'ativo' },
+            { id: 38, codigo: 'SEMEC-006', nome: 'Solicitação de Merenda Escolar', descricao: 'Reclamação ou sugestão sobre merenda escolar', categoria: 'Alimentação', subcategoria: 'Merenda', secretaria_id: 5, sla_horas: 72, prioridade: 'alta', status: 'ativo' },
+
+            // ==================== SEMAJ - MEIO AMBIENTE ====================
+            { id: 39, codigo: 'SEMAJ-001', nome: 'Denúncia de Crime Ambiental', descricao: 'Denúncia de desmatamento, poluição ou maus-tratos a animais', categoria: 'Fiscalização', subcategoria: 'Crime Ambiental', secretaria_id: 6, sla_horas: 48, prioridade: 'emergencial', status: 'ativo' },
+            { id: 40, codigo: 'SEMAJ-002', nome: 'Autorização de Poda ou Corte', descricao: 'Solicitação de autorização para poda ou corte de árvore em propriedade privada', categoria: 'Licenciamento', subcategoria: 'Arborização', secretaria_id: 6, sla_horas: 240, prioridade: 'agendavel', status: 'ativo' },
+            { id: 41, codigo: 'SEMAJ-003', nome: 'Coleta Seletiva', descricao: 'Informações e agendamento de coleta seletiva', categoria: 'Reciclagem', subcategoria: 'Coleta', secretaria_id: 6, sla_horas: 168, prioridade: 'baixa', status: 'ativo' },
+            { id: 42, codigo: 'SEMAJ-004', nome: 'Licenciamento Ambiental', descricao: 'Solicitação de licença ambiental para atividades econômicas', categoria: 'Licenciamento', subcategoria: 'Ambiental', secretaria_id: 6, sla_horas: 720, prioridade: 'agendavel', status: 'ativo' },
+            { id: 43, codigo: 'SEMAJ-005', nome: 'Resgate de Animal Silvestre', descricao: 'Solicitação de resgate de animal silvestre em área urbana', categoria: 'Fauna', subcategoria: 'Resgate', secretaria_id: 6, sla_horas: 24, prioridade: 'emergencial', status: 'ativo' },
+
+            // ==================== SEMDEC - DEFESA CIVIL ====================
+            { id: 44, codigo: 'SEMDEC-001', nome: 'Emergência por Alagamento', descricao: 'Solicitação de socorro em caso de alagamento ou inundação', categoria: 'Emergência', subcategoria: 'Alagamento', secretaria_id: 7, sla_horas: 2, prioridade: 'emergencial', status: 'ativo' },
+            { id: 45, codigo: 'SEMDEC-002', nome: 'Risco de Desabamento', descricao: 'Denúncia de imóvel ou estrutura com risco de desabamento', categoria: 'Emergência', subcategoria: 'Estrutural', secretaria_id: 7, sla_horas: 6, prioridade: 'emergencial', status: 'ativo' },
+            { id: 46, codigo: 'SEMDEC-003', nome: 'Vistoria Preventiva', descricao: 'Solicitação de vistoria em imóvel com suspeita de risco', categoria: 'Prevenção', subcategoria: 'Vistoria', secretaria_id: 7, sla_horas: 72, prioridade: 'alta', status: 'ativo' },
+            { id: 47, codigo: 'SEMDEC-004', nome: 'Orientação sobre Risco', descricao: 'Orientação à população sobre áreas de risco', categoria: 'Prevenção', subcategoria: 'Orientação', secretaria_id: 7, sla_horas: 168, prioridade: 'baixa', status: 'ativo' },
+
+            // ==================== SEMDUH - HABITAÇÃO ====================
+            { id: 48, codigo: 'SEMDUH-001', nome: 'Cadastro Habitacional', descricao: 'Cadastro para programas de habitação popular', categoria: 'Habitação', subcategoria: 'Cadastro', secretaria_id: 8, sla_horas: 240, prioridade: 'agendavel', status: 'ativo' },
+            { id: 49, codigo: 'SEMDUH-002', nome: 'Regularização Fundiária', descricao: 'Solicitação de regularização de imóvel', categoria: 'Regularização', subcategoria: 'Fundiária', secretaria_id: 8, sla_horas: 2160, prioridade: 'agendavel', status: 'ativo' },
+            { id: 50, codigo: 'SEMDUH-003', nome: 'Melhorias Habitacionais', descricao: 'Solicitação de melhorias em moradia popular', categoria: 'Habitação', subcategoria: 'Melhoria', secretaria_id: 8, sla_horas: 720, prioridade: 'media', status: 'ativo' },
+
+            // ==================== SETRA - TRÂNSITO ====================
+            { id: 51, codigo: 'SETRA-001', nome: 'Instalação de Semáforo', descricao: 'Solicitação de instalação de semáforo em cruzamento', categoria: 'Sinalização', subcategoria: 'Semáforo', secretaria_id: 9, sla_horas: 720, prioridade: 'agendavel', status: 'ativo' },
+            { id: 52, codigo: 'SETRA-002', nome: 'Reparo de Semáforo', descricao: 'Reparo de semáforo apagado ou com defeito', categoria: 'Sinalização', subcategoria: 'Manutenção', secretaria_id: 9, sla_horas: 24, prioridade: 'emergencial', status: 'ativo' },
+            { id: 53, codigo: 'SETRA-003', nome: 'Pintura de Faixa de Pedestre', descricao: 'Repintura ou instalação de faixa de pedestres', categoria: 'Sinalização', subcategoria: 'Horizontal', secretaria_id: 9, sla_horas: 168, prioridade: 'media', status: 'ativo' },
+            { id: 54, codigo: 'SETRA-004', nome: 'Instalação de Placa de Trânsito', descricao: 'Instalação de placa de sinalização viária', categoria: 'Sinalização', subcategoria: 'Vertical', secretaria_id: 9, sla_horas: 240, prioridade: 'baixa', status: 'ativo' },
+            { id: 55, codigo: 'SETRA-005', nome: 'Autorização de Evento em Via', descricao: 'Autorização para interdição de via para evento', categoria: 'Autorização', subcategoria: 'Eventos', secretaria_id: 9, sla_horas: 336, prioridade: 'agendavel', status: 'ativo' },
+            { id: 56, codigo: 'SETRA-006', nome: 'Lombada ou Quebra-molas', descricao: 'Solicitação de instalação de redutor de velocidade', categoria: 'Segurança Viária', subcategoria: 'Redutor', secretaria_id: 9, sla_horas: 480, prioridade: 'media', status: 'ativo' },
+
+            // ==================== FUNPAPA - ASSISTÊNCIA SOCIAL ====================
+            { id: 57, codigo: 'FUNPAPA-001', nome: 'Cadastro no Bolsa Família', descricao: 'Cadastro ou atualização no CadÚnico e Bolsa Família', categoria: 'Assistência', subcategoria: 'Cadastro', secretaria_id: 10, sla_horas: 168, prioridade: 'media', status: 'ativo' },
+            { id: 58, codigo: 'FUNPAPA-002', nome: 'Solicitação de Cesta Básica', descricao: 'Solicitação de cesta básica para famílias em vulnerabilidade', categoria: 'Assistência', subcategoria: 'Alimentação', secretaria_id: 10, sla_horas: 96, prioridade: 'alta', status: 'ativo' },
+            { id: 59, codigo: 'FUNPAPA-003', nome: 'Orientação Social', descricao: 'Atendimento com assistente social', categoria: 'Assistência', subcategoria: 'Orientação', secretaria_id: 10, sla_horas: 120, prioridade: 'media', status: 'ativo' },
+            { id: 60, codigo: 'FUNPAPA-004', nome: 'Denúncia de Violência', descricao: 'Denúncia de violência contra criança, idoso ou mulher', categoria: 'Proteção', subcategoria: 'Denúncia', secretaria_id: 10, sla_horas: 24, prioridade: 'emergencial', status: 'ativo' },
+            { id: 61, codigo: 'FUNPAPA-005', nome: 'Abrigamento Temporário', descricao: 'Solicitação de abrigo para pessoa em situação de rua', categoria: 'Assistência', subcategoria: 'Abrigamento', secretaria_id: 10, sla_horas: 12, prioridade: 'emergencial', status: 'ativo' },
+
+            // ==================== SECULT - CULTURA ====================
+            { id: 62, codigo: 'SECULT-001', nome: 'Autorização de Evento Cultural', descricao: 'Autorização para evento cultural em espaço público', categoria: 'Eventos', subcategoria: 'Autorização', secretaria_id: 11, sla_horas: 240, prioridade: 'agendavel', status: 'ativo' },
+            { id: 63, codigo: 'SECULT-002', nome: 'Inscrição em Oficina Cultural', descricao: 'Inscrição em oficinas e cursos culturais gratuitos', categoria: 'Educação Cultural', subcategoria: 'Oficinas', secretaria_id: 11, sla_horas: 168, prioridade: 'baixa', status: 'ativo' },
+            { id: 64, codigo: 'SECULT-003', nome: 'Uso de Espaço Cultural', descricao: 'Solicitação de uso de teatro, centro cultural ou biblioteca', categoria: 'Espaços', subcategoria: 'Agendamento', secretaria_id: 11, sla_horas: 336, prioridade: 'agendavel', status: 'ativo' },
+            { id: 65, codigo: 'SECULT-004', nome: 'Registro de Patrimônio', descricao: 'Solicitação de registro de bem cultural ou patrimônio', categoria: 'Patrimônio', subcategoria: 'Registro', secretaria_id: 11, sla_horas: 720, prioridade: 'baixa', status: 'ativo' },
+
+            // ==================== SETEL - TELECOMUNICAÇÕES ====================
+            { id: 66, codigo: 'SETEL-001', nome: 'Instalação de Wi-Fi Público', descricao: 'Solicitação de ponto de internet gratuita em praça ou espaço público', categoria: 'Conectividade', subcategoria: 'Wi-Fi', secretaria_id: 12, sla_horas: 720, prioridade: 'baixa', status: 'ativo' },
+            { id: 67, codigo: 'SETEL-002', nome: 'Reparo de Wi-Fi Público', descricao: 'Manutenção de ponto de internet pública com defeito', categoria: 'Conectividade', subcategoria: 'Manutenção', secretaria_id: 12, sla_horas: 96, prioridade: 'media', status: 'ativo' },
+            { id: 68, codigo: 'SETEL-003', nome: 'Câmeras de Monitoramento', descricao: 'Solicitação de instalação de câmera de segurança', categoria: 'Segurança', subcategoria: 'Monitoramento', secretaria_id: 12, sla_horas: 1440, prioridade: 'agendavel', status: 'ativo' }
+        ];
+
+        let servicosFiltrados = [...servicos];
+
+        function inicializar() {
+            console.log('✅ Iniciando catálogo com', servicos.length, 'serviços');
+            
+            // Atualizar estatísticas
+            document.getElementById('total-secretarias').textContent = secretarias.length;
+            document.getElementById('total-servicos').textContent = servicos.length;
+            document.getElementById('servicos-emergenciais').textContent = servicos.filter(s => s.prioridade === 'emergencial').length;
+            const slaMedio = Math.floor(servicos.reduce((sum, s) => sum + s.sla_horas, 0) / servicos.length);
+            document.getElementById('sla-medio').textContent = slaMedio + 'h';
+
+            // Popular dropdown de secretarias
+            const select = document.getElementById('filtro-secretaria');
+            secretarias.forEach(sec => {
+                const option = document.createElement('option');
+                option.value = sec.id;
+                option.textContent = sec.icone + ' ' + sec.sigla + ' - ' + sec.nome;
+                select.appendChild(option);
+            });
+
+            // Adicionar event listeners
+            document.getElementById('busca').addEventListener('input', aplicarFiltros);
+            document.getElementById('filtro-secretaria').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtro-prioridade').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtro-status').addEventListener('change', aplicarFiltros);
+
+            aplicarFiltros();
+            console.log('✅ Catálogo inicializado!');
+        }
+
+        function aplicarFiltros() {
+            const busca = document.getElementById('busca').value.toLowerCase();
+            const secretaria = document.getElementById('filtro-secretaria').value;
+            const prioridade = document.getElementById('filtro-prioridade').value;
+            const status = document.getElementById('filtro-status').value;
+
+            servicosFiltrados = servicos.filter(s => {
+                const matchBusca = !busca || 
+                    s.nome.toLowerCase().includes(busca) || 
+                    s.descricao.toLowerCase().includes(busca) ||
+                    s.codigo.toLowerCase().includes(busca) ||
+                    s.categoria.toLowerCase().includes(busca);
+                const matchSec = !secretaria || s.secretaria_id == secretaria;
+                const matchPrio = !prioridade || s.prioridade === prioridade;
+                const matchStatus = !status || s.status === status;
+                return matchBusca && matchSec && matchPrio && matchStatus;
+            });
+
+            console.log('🔍 Filtros aplicados:', servicosFiltrados.length, 'serviços encontrados');
+            aplicarOrdenacao();
+        }
+
+        function aplicarOrdenacao() {
+            const ord = document.getElementById('ordenacao').value;
+            servicosFiltrados.sort((a, b) => {
+                if (ord === 'nome-asc') return a.nome.localeCompare(b.nome);
+                if (ord === 'nome-desc') return b.nome.localeCompare(a.nome);
+                if (ord === 'sla-asc') return a.sla_horas - b.sla_horas;
+                if (ord === 'sla-desc') return b.sla_horas - a.sla_horas;
+                return 0;
+            });
+            renderizar();
+        }
+
+        function renderizar() {
+            const grid = document.getElementById('servicos-grid');
+            const empty = document.getElementById('empty-state');
+            const contador = document.getElementById('contador');
+
+            contador.textContent = `${servicosFiltrados.length} ${servicosFiltrados.length === 1 ? 'serviço' : 'serviços'}`;
+
+            if (servicosFiltrados.length === 0) {
+                grid.innerHTML = '';
+                empty.classList.add('show');
+                return;
+            }
+
+            empty.classList.remove('show');
+            grid.innerHTML = servicosFiltrados.map(s => {
+                const sec = secretarias.find(sec => sec.id === s.secretaria_id);
+                const slaTexto = s.sla_horas < 24 ? s.sla_horas + 'h' : 
+                                s.sla_horas < 168 ? Math.floor(s.sla_horas / 24) + ' dias' :
+                                Math.floor(s.sla_horas / 168) + ' semanas';
+                return `
+                    <div class="servico-card" onclick="abrirModal(${s.id})">
+                        <div class="servico-header">
+                            <div class="servico-codigo">${s.codigo}</div>
+                            <span class="badge-status ${s.status}">${s.status}</span>
+                        </div>
+                        <h3 class="servico-titulo">${s.nome}</h3>
+                        <div class="servico-secretaria"><span>${sec.icone}</span><span>${sec.sigla}</span></div>
+                        <p class="servico-descricao">${s.descricao}</p>
+                        <div class="servico-categorias">
+                            <span class="categoria-tag">📁 ${s.categoria}</span>
+                            ${s.subcategoria ? `<span class="categoria-tag">📂 ${s.subcategoria}</span>` : ''}
+                        </div>
+                        <div class="servico-footer">
+                            <div class="sla-info">
+                                <div class="sla-label">SLA de Atendimento</div>
+                                <div class="sla-valor">⏱️ ${slaTexto}</div>
+                            </div>
+                            <span class="prioridade-badge ${s.prioridade}">${s.prioridade}</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            
+            console.log('✅ Renderizados', servicosFiltrados.length, 'serviços');
+        }
+
+        function abrirModal(id) {
+            const s = servicos.find(serv => serv.id === id);
+            const sec = secretarias.find(sec => sec.id === s.secretaria_id);
+            const slaTexto = s.sla_horas < 24 ? s.sla_horas + 'h' : 
+                            s.sla_horas < 168 ? Math.floor(s.sla_horas / 24) + ' dias' :
+                            Math.floor(s.sla_horas / 168) + ' semanas';
+
+            document.getElementById('modal-codigo').textContent = s.codigo;
+            document.getElementById('modal-titulo').textContent = s.nome;
+            document.getElementById('modal-secretaria').textContent = sec.icone + ' ' + sec.nome;
+            document.getElementById('modal-descricao').textContent = s.descricao;
+            document.getElementById('modal-sla').textContent = slaTexto;
+            document.getElementById('modal-prioridade').innerHTML = `<span class="prioridade-badge ${s.prioridade}">${s.prioridade}</span>`;
+            document.getElementById('modal-categoria').textContent = s.categoria;
+            document.getElementById('modal-subcategoria').textContent = s.subcategoria;
+
+            document.getElementById('modal').classList.add('active');
+        }
+
+        function fecharModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        function limparFiltros() {
+            document.getElementById('busca').value = '';
+            document.getElementById('filtro-secretaria').value = '';
+            document.getElementById('filtro-prioridade').value = '';
+            document.getElementById('filtro-status').value = '';
+            document.getElementById('ordenacao').value = 'nome-asc';
+            aplicarFiltros();
+        }
+
+        window.addEventListener('DOMContentLoaded', inicializar);
+        console.log('✅ Script completo carregado!');
+    </script>
+</body>
+</html>

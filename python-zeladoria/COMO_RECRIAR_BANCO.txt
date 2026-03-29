@@ -1,0 +1,42 @@
+═══════════════════════════════════════════════════════════
+  🎯 SCRIPTS PARA RECRIAR O BANCO
+═══════════════════════════════════════════════════════════
+
+Escolha qual executar:
+
+───────────────────────────────────────────────────────────
+  📁 RECRIAR_BANCO.bat
+───────────────────────────────────────────────────────────
+
+  ✓ Fecha a API automaticamente
+  ✓ Deleta banco antigo
+  ✓ Cria tabelas novas
+  ✓ Cria 5 secretarias
+  ✓ Cria 9 usuarios de teste
+  ✓ Mostra as credenciais
+
+  Depois você executa: INICIAR_API_8001.bat
+
+───────────────────────────────────────────────────────────
+  🚀 RECRIAR_E_INICIAR.bat (RECOMENDADO)
+───────────────────────────────────────────────────────────
+
+  ✓ Faz tudo do RECRIAR_BANCO.bat
+  ✓ JÁ INICIA A API automaticamente
+  ✓ Pronto para usar!
+
+  Depois só acessar: http://localhost:8001/app
+
+═══════════════════════════════════════════════════════════
+  🎉 USE ESTE:
+═══════════════════════════════════════════════════════════
+
+  Duplo clique em: RECRIAR_E_INICIAR.bat
+
+  Aguarde aparecer: "Application startup complete"
+
+  Acesse: http://localhost:8001/app
+
+  Login: admin@zeladoria.com / admin123
+
+═══════════════════════════════════════════════════════════

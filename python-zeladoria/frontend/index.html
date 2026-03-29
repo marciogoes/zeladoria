@@ -1,0 +1,2169 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistema de Zeladoria Urbana - Belém/PA</title>
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #1e40af;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --info: #3b82f6;
+            --light: #f1f5f9;
+            --dark: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: var(--light);
+            color: var(--dark);
+            line-height: 1.6;
+        }
+
+        /* ========== HEADER ========== */
+        header {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+            color: white;
+            padding: 1.5rem 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo h1 {
+            font-size: 1.8rem;
+            margin-bottom: 0.3rem;
+        }
+
+        .logo p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .user-info {
+            background: rgba(255,255,255,0.1);
+            padding: 12px 20px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .user-info strong {
+            font-size: 1.1rem;
+        }
+
+        .btn-logout {
+            background: rgba(255,255,255,0.2);
+            border: 1px solid rgba(255,255,255,0.3);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+
+        .btn-logout:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        /* ========== TABS ========== */
+        .tabs {
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-top: 2rem;
+        }
+
+        .tabs-header {
+            display: flex;
+            border-bottom: 2px solid var(--border);
+            overflow-x: auto;
+        }
+
+        .tab-button {
+            padding: 15px 30px;
+            background: none;
+            border: none;
+            border-bottom: 3px solid transparent;
+            cursor: pointer;
+            font-size: 1rem;
+            font-weight: 500;
+            color: var(--secondary);
+            transition: all 0.3s;
+            white-space: nowrap;
+        }
+
+        .tab-button:hover {
+            background: var(--light);
+            color: var(--primary);
+        }
+
+        .tab-button.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .tab-content {
+            display: none;
+            padding: 2rem;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* ========== CARDS ========== */
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            transition: transform 0.2s, box-shadow 0.2s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 5px;
+        }
+
+        .card-protocolo {
+            font-size: 0.85rem;
+            color: var(--secondary);
+            font-family: monospace;
+        }
+
+        .badge {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+
+        .badge.aberto { background: #dbeafe; color: #1e40af; }
+        .badge.em_andamento { background: #fef3c7; color: #b45309; }
+        .badge.resolvido { background: #d1fae5; color: #065f46; }
+        .badge.cancelado { background: #fee2e2; color: #991b1b; }
+
+        .badge.baixa { background: #dbeafe; color: #1e40af; }
+        .badge.media { background: #fef3c7; color: #b45309; }
+        .badge.alta { background: #fed7aa; color: #c2410c; }
+        .badge.critica { background: #fee2e2; color: #991b1b; }
+
+        .card-info {
+            margin-top: 15px;
+            font-size: 0.9rem;
+            color: var(--secondary);
+        }
+
+        .card-info div {
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ========== FORMS ========== */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--dark);
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+
+        .form-group textarea {
+            resize: vertical;
+            min-height: 100px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #1e3a8a;
+        }
+
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #059669;
+        }
+
+        .btn-secondary {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #475569;
+        }
+
+        /* ========== FILTERS ========== */
+        .filters {
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        /* ========== MODAL ========== */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            overflow-y: auto;
+            cursor: pointer;
+        }
+
+        .modal-content {
+            cursor: default;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            max-width: 800px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-header h2 {
+            color: var(--dark);
+            font-size: 1.5rem;
+        }
+
+        .btn-close {
+            background: none;
+            border: none;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: var(--secondary);
+            padding: 4px 8px;
+        }
+
+        .btn-close:hover {
+            color: var(--danger);
+        }
+
+        .modal-body {
+            padding: 24px;
+        }
+
+        /* ========== LOGIN ========== */
+        #login-page {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+        }
+
+        .login-container {
+            background: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+            overflow: hidden;
+            max-width: 900px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+        }
+
+        .login-left {
+            background: linear-gradient(135deg, var(--primary) 0%, #1e3a8a 100%);
+            padding: 40px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .login-left h1 {
+            font-size: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        .login-left p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .login-right {
+            padding: 40px;
+        }
+
+        .login-tabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        .login-tab {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            background: var(--light);
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            color: var(--secondary);
+            transition: all 0.3s;
+        }
+
+        .login-tab.active {
+            background: var(--primary);
+            color: white;
+        }
+
+        .demo-users {
+            background: #fef3c7;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+        }
+
+        .demo-users h4 {
+            color: #b45309;
+            margin-bottom: 10px;
+        }
+
+        .demo-btn {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 8px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .demo-cidadao { background: #dbeafe; color: #1e40af; }
+        .demo-equipe { background: #fef3c7; color: #b45309; }
+        .demo-gestor { background: #d1fae5; color: #065f46; }
+
+        /* ========== MAPA ========== */
+        #map {
+            height: 400px;
+            width: 100%;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            margin-bottom: 15px;
+            z-index: 1;
+        }
+
+        .map-container {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .map-instructions {
+            background: var(--info);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .map-instructions.success {
+            background: var(--success);
+        }
+
+        /* ========== RATING ========== */
+        .rating-stars {
+            display: flex;
+            gap: 5px;
+            font-size: 2rem;
+            margin: 20px 0;
+        }
+
+        .star {
+            cursor: pointer;
+            color: #e5e7eb;
+            transition: color 0.2s;
+        }
+
+        .star.filled {
+            color: #fbbf24;
+        }
+
+        .star:hover,
+        .star:hover ~ .star {
+            color: #fbbf24;
+        }
+
+        /* ========== DASHBOARD ========== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+        }
+
+        .stat-icon.blue { background: #dbeafe; }
+        .stat-icon.yellow { background: #fef3c7; }
+        .stat-icon.green { background: #d1fae5; }
+        .stat-icon.purple { background: #f3e8ff; }
+
+        .stat-info h3 {
+            font-size: 2rem;
+            color: var(--dark);
+            margin-bottom: 4px;
+        }
+
+        .stat-info p {
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+
+        .chart-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--dark);
+            margin-bottom: 20px;
+        }
+
+        .chart-item {
+            margin-bottom: 15px;
+        }
+
+        .chart-label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 0.9rem;
+        }
+
+        .chart-bar {
+            height: 8px;
+            background: var(--light);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .chart-fill {
+            height: 100%;
+            background: var(--primary);
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .login-container {
+                grid-template-columns: 1fr;
+            }
+
+            .login-left {
+                display: none;
+            }
+
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+
+            .tabs-header {
+                flex-wrap: wrap;
+            }
+
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .filters {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* ========== LOADING ========== */
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .loading.active {
+            display: flex;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255,255,255,0.3);
+            border-top-color: white;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* ========== TOAST ========== */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: white;
+            padding: 16px 24px;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 12px;
+            min-width: 300px;
+        }
+
+        .toast.active {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+
+        .hidden {
+            display: none !important;
+        }
+
+        /* ========== MODAL RECLASSIFICAÇÃO ========== */
+        #modal-reclassificar .card {
+            transition: all 0.3s;
+        }
+
+        #modal-reclassificar .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #servicos-lista-reclassificar {
+            margin-top: 20px;
+        }
+
+        #chamado-atual-info {
+            border-left: 4px solid var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- LOADING -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- TOAST -->
+    <div class="toast" id="toast">
+        <span id="toast-message"></span>
+    </div>
+
+    <!-- LOGIN PAGE -->
+    <div id="login-page">
+        <div class="login-container">
+            <div class="login-left">
+                <h1>🏛️ Sistema de Zeladoria Urbana</h1>
+                <p>Belém do Pará</p>
+                <p style="margin-top: 20px; font-size: 0.9rem;">
+                    Gestão inteligente de serviços públicos para melhorar a qualidade de vida da população.
+                </p>
+            </div>
+            <div class="login-right">
+                <div class="login-tabs">
+                    <button class="login-tab active" data-tab="login">Login</button>
+                    <button class="login-tab" data-tab="register">Cadastro</button>
+                </div>
+
+                <!-- LOGIN FORM -->
+                <form id="login-form">
+                    <div class="form-group">
+                        <label>📧 E-mail</label>
+                        <input type="email" id="login-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔒 Senha</label>
+                        <input type="password" id="login-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Entrar
+                    </button>
+                </form>
+
+                <!-- REGISTER FORM (Hidden) -->
+                <form id="register-form" class="hidden">
+                    <div class="form-group">
+                        <label>👤 Nome Completo</label>
+                        <input type="text" id="register-nome" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📧 E-mail</label>
+                        <input type="email" id="register-email" required>
+                    </div>
+                    <div class="form-group">
+                        <label>📱 Telefone</label>
+                        <input type="tel" id="register-telefone" required>
+                    </div>
+                    <div class="form-group">
+                        <label>🔒 Senha</label>
+                        <input type="password" id="register-password" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="width: 100%;">
+                        Cadastrar
+                    </button>
+                </form>
+
+                <!-- DEMO USERS -->
+                <div class="demo-users">
+                    <h4>👥 Usuários de Teste</h4>
+                    <button class="demo-btn demo-cidadao" data-email="cidadao@zeladoria.com" data-senha="cidadao123">
+                        👤 Cidadão
+                    </button>
+                    <button class="demo-btn demo-equipe" data-email="equipe@zeladoria.com" data-senha="equipe123">
+                        👷 Equipe
+                    </button>
+                    <button class="demo-btn demo-gestor" data-email="gestor@zeladoria.com" data-senha="gestor123">
+                        📊 Gestor
+                    </button>
+                    <button class="demo-btn" style="background: #fef3c7; color: #b45309;" data-email="seurb@zeladoria.com" data-senha="seurb123">
+                        🏛️ Secretaria (SEURB)
+                    </button>
+                    <button class="demo-btn" style="background: #e0e7ff; color: #4338ca;" data-email="admin@zeladoria.com" data-senha="admin123">
+                        🔧 Admin
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP (Hidden initially) -->
+    <div id="main-app" class="hidden">
+        <header>
+            <div class="container">
+                <div class="header-content">
+                    <div class="logo">
+                        <h1>🏛️ Zeladoria Urbana</h1>
+                        <p>Sistema de Gestão - Belém/PA</p>
+                    </div>
+                    <div class="user-info">
+                        <div>
+                            <div id="user-name" style="font-weight: 600;"></div>
+                            <div id="user-type" style="font-size: 0.85rem; opacity: 0.9;"></div>
+                        </div>
+                        <button class="btn-logout" onclick="logout()">🚪 Sair</button>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="container">
+            <div class="tabs">
+                <div class="tabs-header" id="tabs-header">
+                    <button class="tab-button active" data-tab="chamados">📞 Chamados</button>
+                    <button class="tab-button" data-tab="novo-chamado">➕ Novo Chamado</button>
+                    <button class="tab-button" data-tab="catalogo" id="catalogo-tab">📚 Catálogo de Serviços</button>
+                    <button class="tab-button hidden" data-tab="dashboard" id="dashboard-tab">📊 Dashboard</button>
+                </div>
+
+                <!-- TAB: CHAMADOS -->
+                <div class="tab-content active" id="tab-chamados">
+                    <h2 id="chamados-title">Meus Chamados</h2>
+                    
+                    <div class="filters">
+                        <div class="form-group" style="margin: 0;">
+                            <label>🔍 Buscar</label>
+                            <input type="text" id="filter-search" placeholder="Protocolo ou título...">
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>📊 Status</label>
+                            <select id="filter-status">
+                                <option value="">Todos</option>
+                                <option value="aberto">Aberto</option>
+                                <option value="em_andamento">Em Andamento</option>
+                                <option value="resolvido">Resolvido</option>
+                                <option value="cancelado">Cancelado</option>
+                            </select>
+                        </div>
+                        <div class="form-group" style="margin: 0;">
+                            <label>⚠️ Prioridade</label>
+                            <select id="filter-prioridade">
+                                <option value="">Todas</option>
+                                <option value="baixa">Baixa</option>
+                                <option value="media">Média</option>
+                                <option value="alta">Alta</option>
+                                <option value="critica">Crítica</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="cards-grid" id="chamados-list"></div>
+                </div>
+
+                <!-- TAB: NOVO CHAMADO -->
+                <div class="tab-content" id="tab-novo-chamado">
+                    <h2>➕ Criar Novo Chamado</h2>
+                    <form id="novo-chamado-form">
+                        <div class="form-group">
+                            <label>📝 Título</label>
+                            <input type="text" id="titulo" required placeholder="Ex: Buraco na rua">
+                        </div>
+                        
+                        <div class="form-group">
+                            <label>📄 Descrição</label>
+                            <textarea id="descricao" required placeholder="Descreva o problema detalhadamente..."></textarea>
+                        </div>
+
+                        <div class="form-group">
+                            <label>📍 Localização</label>
+                            <button type="button" id="btnGeolocation" class="btn btn-secondary" style="width: 100%; margin-bottom: 10px;">
+                                📍 Usar Minha Localização Atual
+                            </button>
+                            <div id="geo-status" style="padding: 10px; border-radius: 8px; margin-bottom: 10px; display: none;"></div>
+                        </div>
+
+                        <!-- MAPA -->
+                        <div class="map-container">
+                            <div class="map-instructions" id="map-instructions">
+                                🗺️ Clique no mapa para marcar a localização do problema
+                            </div>
+                            <div id="map"></div>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🗺️ Latitude</label>
+                            <input type="text" id="latitude" readonly placeholder="Clique no mapa ou use GPS">
+                        </div>
+
+                        <div class="form-group">
+                            <label>🗺️ Longitude</label>
+                            <input type="text" id="longitude" readonly placeholder="Clique no mapa ou use GPS">
+                        </div>
+
+                        <div class="form-group">
+                            <label>📍 Endereço</label>
+                            <input type="text" id="endereco" placeholder="Será preenchido automaticamente">
+                        </div>
+
+                        <div class="form-group">
+                            <label>🏷️ Categoria</label>
+                            <select id="categoria" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label>🏘️ Bairro</label>
+                            <select id="bairro" required>
+                                <option value="">Selecione...</option>
+                            </select>
+                        </div>
+
+                        <!-- Prioridade removida: será definida pela secretaria -->
+
+                        <div class="form-group">
+                            <label>📸 Foto (opcional)</label>
+                            <input type="file" id="foto" accept="image/*">
+                        </div>
+
+                        <button type="submit" class="btn btn-primary">
+                            📤 Enviar Chamado
+                        </button>
+                    </form>
+                </div>
+
+                <!-- TAB: CATÁLOGO DE SERVIÇOS -->
+                <div class="tab-content" id="tab-catalogo">
+                    <div style="text-align: center; padding: 60px 20px;">
+                        <h2 style="font-size: 2.5rem; margin-bottom: 20px;">📚 Catálogo de Serviços</h2>
+                        <p style="font-size: 1.2rem; color: var(--secondary); margin-bottom: 30px;">
+                            Conheça todos os serviços oferecidos pelas Secretarias da Prefeitura de Belém
+                        </p>
+                        
+                        <!-- BOTÃO PRINCIPAL (VERSÃO 1: Link direto) -->
+                        <a href="/static/catalogo.html" target="_blank" class="btn btn-primary" style="font-size: 1.3rem; padding: 20px 50px; margin: 20px; text-decoration: none; display: inline-block;">
+                            🚀 ABRIR CATÁLOGO DE SERVIÇOS
+                        </a>
+                        
+                        <!-- BOTÃO ALTERNATIVO (VERSÃO 2: Mesma aba) -->
+                        <a href="/static/catalogo.html" class="btn btn-secondary" style="font-size: 1.1rem; padding: 15px 35px; margin: 10px; text-decoration: none; display: inline-block;">
+                            📖 Abrir na Mesma Aba
+                        </a>
+                        
+                        <p style="margin-top: 20px; color: var(--secondary); font-size: 0.9rem;">
+                            💡 Se nenhum botão funcionar, verifique se seu navegador está bloqueando popups
+                        </p>
+                        
+                        <div style="margin-top: 50px; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+                            <h3 style="margin-bottom: 20px;">🎯 O que você encontrará:</h3>
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 20px;">
+                                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 2rem; margin-bottom: 10px;">🏛️</div>
+                                    <h4>Secretarias</h4>
+                                    <p style="color: var(--secondary); font-size: 0.9rem;">Todos os órgãos municipais</p>
+                                </div>
+                                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 2rem; margin-bottom: 10px;">📋</div>
+                                    <h4>Serviços</h4>
+                                    <p style="color: var(--secondary); font-size: 0.9rem;">Descrição completa de cada serviço</p>
+                                </div>
+                                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 2rem; margin-bottom: 10px;">⏱️</div>
+                                    <h4>SLA</h4>
+                                    <p style="color: var(--secondary); font-size: 0.9rem;">Prazo de atendimento de cada serviço</p>
+                                </div>
+                                <div style="background: white; padding: 20px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                                    <div style="font-size: 2rem; margin-bottom: 10px;">🔍</div>
+                                    <h4>Busca</h4>
+                                    <p style="color: var(--secondary); font-size: 0.9rem;">Encontre rapidamente o que precisa</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB: DASHBOARD -->
+                <div class="tab-content" id="tab-dashboard">
+                    <h2 id="dashboard-title">📊 Dashboard de Gestão</h2>
+                    
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <div class="stat-icon blue">📞</div>
+                            <div class="stat-info">
+                                <h3 id="stat-total">0</h3>
+                                <p>Total de Chamados</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon yellow">⏳</div>
+                            <div class="stat-info">
+                                <h3 id="stat-andamento">0</h3>
+                                <p>Em Andamento</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon green">✅</div>
+                            <div class="stat-info">
+                                <h3 id="stat-resolvidos">0</h3>
+                                <p>Resolvidos</p>
+                            </div>
+                        </div>
+                        <div class="stat-card">
+                            <div class="stat-icon purple">⭐</div>
+                            <div class="stat-info">
+                                <h3 id="stat-avaliacao">0.0</h3>
+                                <p>Avaliação Média</p>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- MÉTRICAS EXECUTIVAS (ADMIN E GESTOR) -->
+                    <div id="metricas-executivas" class="hidden">
+                        <div class="stats-grid" style="margin-top: 20px;">
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #dbeafe;">📈</div>
+                                <div class="stat-info">
+                                    <h3 id="stat-taxa-resolucao">0%</h3>
+                                    <p>Taxa de Resolução</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fef3c7;">📋</div>
+                                <div class="stat-info">
+                                    <h3 id="stat-abertos">0</h3>
+                                    <p>Chamados Abertos</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #e0e7ff;">⏱️</div>
+                                <div class="stat-info">
+                                    <h3 id="stat-tempo-medio">0 dias</h3>
+                                    <p>Tempo Médio Resolução</p>
+                                </div>
+                            </div>
+                            <div class="stat-card">
+                                <div class="stat-icon" style="background: #fee2e2;">🚨</div>
+                                <div class="stat-info">
+                                    <h3 id="stat-criticos">0</h3>
+                                    <p>Chamados Críticos</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- GRÁFICOS EXECUTIVOS (ADMIN E GESTOR) -->
+                    <div id="graficos-executivos" class="hidden">
+                        <div class="chart-container" style="margin-top: 20px;">
+                            <div class="chart-title">📈 Evolução Mensal de Chamados</div>
+                            <div id="grafico-evolucao"></div>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px; margin-top: 20px;">
+                            <div class="chart-container">
+                                <div class="chart-title">📊 Chamados por Status</div>
+                                <div id="grafico-status"></div>
+                            </div>
+                            
+                            <div class="chart-container">
+                                <div class="chart-title">⚠️ Chamados por Prioridade</div>
+                                <div id="grafico-prioridades"></div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(400px, 1fr)); gap: 20px;">
+                        <div class="chart-container">
+                            <div class="chart-title">📊 Top 5 Categorias</div>
+                            <div id="chart-categorias"></div>
+                        </div>
+
+                        <div class="chart-container">
+                            <div class="chart-title">🏘️ Top 5 Bairros</div>
+                            <div id="chart-bairros"></div>
+                        </div>
+                    </div>
+
+                    <div class="chart-container">
+                        <div class="chart-title">🕐 Chamados Recentes</div>
+                        <div class="cards-grid" id="chamados-recentes"></div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- MODAL DETALHES -->
+    <div class="modal" id="modal-detalhes">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>📄 Detalhes do Chamado</h2>
+                <button class="btn-close" onclick="closeModal()">&times;</button>
+            </div>
+            <div class="modal-body" id="modal-body"></div>
+        </div>
+    </div>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    
+    <!-- Catálogo Helper -->
+    <script src="catalogo-helper.js"></script>
+    
+    <!-- Reclassificação JS -->
+    <script src="reclassificacao.js"></script>
+    
+    <!-- Dashboard Executivo JS -->
+    <script src="dashboard-executivo.js"></script>
+    
+    <!-- Sistema de Comentários -->
+    <script src="comentarios.js"></script>
+    
+    <script>
+        const API_BASE = window.location.origin + '/api';
+        let currentUser = null;
+        let map = null;
+        let marker = null;
+        let allChamados = [];
+
+        // ========== UTILITY FUNCTIONS ==========
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastMessage = document.getElementById('toast-message');
+            
+            toast.className = 'toast ' + type;
+            toastMessage.textContent = message;
+            toast.classList.add('active');
+            
+            setTimeout(() => {
+                toast.classList.remove('active');
+            }, 3000);
+        }
+
+        function getToken() {
+            return localStorage.getItem('token');
+        }
+
+        async function apiRequest(endpoint, options = {}) {
+            const token = getToken();
+            const headers = {
+                'Content-Type': 'application/json',
+                ...options.headers
+            };
+            
+            if (token) {
+                headers['Authorization'] = `Bearer ${token}`;
+            }
+
+            const response = await fetch(API_BASE + endpoint, {
+                ...options,
+                headers
+            });
+
+            if (response.status === 401) {
+                logout();
+                throw new Error('Sessão expirada');
+            }
+
+            return response;
+        }
+
+        function logout() {
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            currentUser = null;
+            document.getElementById('login-page').classList.remove('hidden');
+            document.getElementById('main-app').classList.add('hidden');
+            document.getElementById('login-email').value = '';
+            document.getElementById('login-password').value = '';
+        }
+
+        // ========== LOGIN/REGISTER ==========
+        document.querySelectorAll('.login-tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                const tabName = tab.dataset.tab;
+                
+                document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+                tab.classList.add('active');
+                
+                if (tabName === 'login') {
+                    document.getElementById('login-form').classList.remove('hidden');
+                    document.getElementById('register-form').classList.add('hidden');
+                } else {
+                    document.getElementById('login-form').classList.add('hidden');
+                    document.getElementById('register-form').classList.remove('hidden');
+                }
+            });
+        });
+
+        document.querySelectorAll('.demo-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('login-email').value = btn.dataset.email;
+                document.getElementById('login-password').value = btn.dataset.senha;
+            });
+        });
+
+        document.getElementById('login-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const email = document.getElementById('login-email').value;
+            const senha = document.getElementById('login-password').value;
+            
+            showLoading();
+            
+            try {
+                const response = await fetch(API_BASE + '/auth/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, senha })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    localStorage.setItem('token', data.access_token);
+                    localStorage.setItem('user', JSON.stringify(data.usuario));
+                    currentUser = data.usuario;
+                    
+                    showToast('Login realizado com sucesso!');
+                    loadMainApp();
+                } else {
+                    showToast(data.detail || 'Erro ao fazer login', 'error');
+                }
+            } catch (error) {
+                showToast('Erro de conexão: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        document.getElementById('register-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const nome = document.getElementById('register-nome').value;
+            const email = document.getElementById('register-email').value;
+            const telefone = document.getElementById('register-telefone').value;
+            const senha = document.getElementById('register-password').value;
+            
+            showLoading();
+            
+            try {
+                const response = await apiRequest('/auth/register', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        nome,
+                        email,
+                        telefone,
+                        senha,
+                        tipo: 'cidadao'
+                    })
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Cadastro realizado com sucesso! Faça login.');
+                    document.querySelector('.login-tab[data-tab="login"]').click();
+                    document.getElementById('login-email').value = email;
+                } else {
+                    showToast(data.detail || 'Erro ao cadastrar', 'error');
+                }
+            } catch (error) {
+                showToast('Erro de conexão: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        // ========== MAIN APP ==========
+        async function loadMainApp() {
+            document.getElementById('login-page').classList.add('hidden');
+            document.getElementById('main-app').classList.remove('hidden');
+            
+            // Load user info
+            const userIcon = currentUser.tipo === 'cidadao' ? '👤' :
+                           currentUser.tipo === 'equipe' ? '👷' :
+                           currentUser.tipo === 'gestor' ? '📊' :
+                           currentUser.tipo === 'secretaria' ? '🏛️' : '🔧';
+            
+            document.getElementById('user-name').textContent = userIcon + ' ' + currentUser.nome;
+            document.getElementById('user-type').textContent = currentUser.tipo.charAt(0).toUpperCase() + currentUser.tipo.slice(1);
+            
+            // Show/hide dashboard tab
+            if (['gestor', 'admin', 'secretaria', 'equipe'].includes(currentUser.tipo)) {
+                document.getElementById('dashboard-tab').classList.remove('hidden');
+            } else {
+                document.getElementById('dashboard-tab').classList.add('hidden');
+            }
+            
+            // Mostrar métricas executivas para admin e gestor
+            if (currentUser.tipo === 'admin' || currentUser.tipo === 'gestor') {
+                document.getElementById('dashboard-title').textContent = '👑 Dashboard Executivo';
+                const metricasExec = document.getElementById('metricas-executivas');
+                const graficosExec = document.getElementById('graficos-executivos');
+                if (metricasExec) metricasExec.classList.remove('hidden');
+                if (graficosExec) graficosExec.classList.remove('hidden');
+            }
+            
+            // Update title
+            if (currentUser.tipo === 'cidadao') {
+                document.getElementById('chamados-title').textContent = 'Meus Chamados';
+            } else if (currentUser.tipo === 'secretaria') {
+                document.getElementById('chamados-title').textContent = 'Chamados da Secretaria';
+            } else {
+                document.getElementById('chamados-title').textContent = 'Todos os Chamados';
+            }
+            
+            // Load data
+            await loadCategorias();
+            await loadBairros();
+            await loadChamados();
+            
+            // Initialize map
+            initMap();
+        }
+
+        // ========== TABS ==========
+        document.querySelectorAll('.tab-button').forEach(button => {
+            button.addEventListener('click', () => {
+                const tabName = button.dataset.tab;
+                
+                // IMPORTANTE: Fechar modal ao trocar de tab
+                closeModal();
+                
+                document.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                
+                document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+                document.getElementById('tab-' + tabName).classList.add('active');
+                
+                if (tabName === 'dashboard') {
+                    loadDashboard();
+                }
+            });
+        });
+
+        // ========== MAP ==========
+        function initMap() {
+            if (map) return;
+            
+            const belemCoords = [-1.4558, -48.4902];
+            
+            map = L.map('map').setView(belemCoords, 13);
+            
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+            
+            marker = L.marker(belemCoords, {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-red.png',
+                    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+                    iconSize: [25, 41],
+                    iconAnchor: [12, 41],
+                    popupAnchor: [1, -34],
+                    shadowSize: [41, 41]
+                })
+            }).addTo(map);
+            
+            marker.bindPopup('Sua localização').openPopup();
+            
+            map.on('click', async (e) => {
+                marker.setLatLng(e.latlng);
+                document.getElementById('latitude').value = e.latlng.lat.toFixed(6);
+                document.getElementById('longitude').value = e.latlng.lng.toFixed(6);
+                
+                document.getElementById('map-instructions').textContent = '✅ Localização selecionada no mapa!';
+                document.getElementById('map-instructions').classList.add('success');
+                
+                await reverseGeocode(e.latlng.lat, e.latlng.lng);
+            });
+            
+            marker.on('dragend', async (e) => {
+                const position = marker.getLatLng();
+                document.getElementById('latitude').value = position.lat.toFixed(6);
+                document.getElementById('longitude').value = position.lng.toFixed(6);
+                
+                document.getElementById('map-instructions').textContent = '✅ Localização selecionada no mapa!';
+                document.getElementById('map-instructions').classList.add('success');
+                
+                await reverseGeocode(position.lat, position.lng);
+            });
+        }
+
+        document.getElementById('btnGeolocation').addEventListener('click', () => {
+            const statusDiv = document.getElementById('geo-status');
+            
+            if (!navigator.geolocation) {
+                statusDiv.textContent = '❌ Geolocalização não suportada';
+                statusDiv.style.display = 'block';
+                statusDiv.style.background = '#fee2e2';
+                statusDiv.style.color = '#991b1b';
+                return;
+            }
+            
+            statusDiv.textContent = '📍 Obtendo sua localização...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.background = '#dbeafe';
+            statusDiv.style.color = '#1e40af';
+            
+            navigator.geolocation.getCurrentPosition(
+                async (position) => {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    
+                    document.getElementById('latitude').value = lat.toFixed(6);
+                    document.getElementById('longitude').value = lng.toFixed(6);
+                    
+                    if (map && marker) {
+                        map.setView([lat, lng], 16);
+                        marker.setLatLng([lat, lng]);
+                    }
+                    
+                    statusDiv.textContent = '✅ Localização obtida com sucesso!';
+                    statusDiv.style.background = '#d1fae5';
+                    statusDiv.style.color = '#065f46';
+                    
+                    document.getElementById('map-instructions').textContent = '✅ Localização selecionada no mapa!';
+                    document.getElementById('map-instructions').classList.add('success');
+                    
+                    await reverseGeocode(lat, lng);
+                    
+                    setTimeout(() => {
+                        statusDiv.style.display = 'none';
+                    }, 3000);
+                },
+                (error) => {
+                    let errorMsg = 'Erro ao obter localização';
+                    
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMsg = '❌ Permissão de localização negada';
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMsg = '❌ Localização indisponível';
+                            break;
+                        case error.TIMEOUT:
+                            errorMsg = '❌ Tempo esgotado';
+                            break;
+                    }
+                    
+                    statusDiv.textContent = errorMsg;
+                    statusDiv.style.background = '#fee2e2';
+                    statusDiv.style.color = '#991b1b';
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+
+        async function reverseGeocode(lat, lng) {
+            try {
+                const response = await fetch(
+                    `https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`
+                );
+                const data = await response.json();
+                
+                if (data.display_name) {
+                    document.getElementById('endereco').value = data.display_name;
+                }
+            } catch (error) {
+                console.error('Erro ao buscar endereço:', error);
+            }
+        }
+
+        async function loadCategorias() {
+            try {
+                console.log('Carregando categorias...');
+                const response = await fetch(API_BASE + '/categorias');
+                
+                if (!response.ok) {
+                    console.error('Erro ao carregar categorias:', response.status);
+                    return;
+                }
+                
+                const categorias = await response.json();
+                console.log('Categorias carregadas:', categorias.length);
+                
+                const select = document.getElementById('categoria');
+                select.innerHTML = '<option value="">Selecione...</option>';
+                
+                categorias.forEach(cat => {
+                    const option = document.createElement('option');
+                    option.value = cat.id;
+                    option.textContent = cat.nome;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar categorias:', error);
+            }
+        }
+
+        async function loadBairros() {
+            try {
+                console.log('Carregando bairros...');
+                const response = await fetch(API_BASE + '/bairros');
+                
+                if (!response.ok) {
+                    console.error('Erro ao carregar bairros:', response.status);
+                    return;
+                }
+                
+                const bairros = await response.json();
+                console.log('Bairros carregados:', bairros.length);
+                
+                const select = document.getElementById('bairro');
+                select.innerHTML = '<option value="">Selecione...</option>';
+                
+                bairros.forEach(bairro => {
+                    const option = document.createElement('option');
+                    option.value = bairro.id;
+                    option.textContent = bairro.nome;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                console.error('Erro ao carregar bairros:', error);
+            }
+        }
+
+        async function loadChamados() {
+            showLoading();
+            
+            try {
+                const response = await apiRequest('/chamados');
+                allChamados = await response.json();
+                
+                renderChamados(allChamados);
+            } catch (error) {
+                showToast('Erro ao carregar chamados', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function renderChamados(chamados) {
+            const container = document.getElementById('chamados-list');
+            
+            if (chamados.length === 0) {
+                container.innerHTML = '<p style="text-align: center; padding: 40px;">Nenhum chamado encontrado.</p>';
+                return;
+            }
+            
+            container.innerHTML = chamados.map(chamado => `
+                <div class="card" onclick="showDetails(${chamado.id})">
+                    <div class="card-header">
+                        <div>
+                            <div class="card-title">${chamado.titulo}</div>
+                            <div class="card-protocolo">${chamado.protocolo}</div>
+                        </div>
+                        <div>
+                            <span class="badge ${chamado.status}">${formatStatus(chamado.status)}</span>
+                        </div>
+                    </div>
+                    <div class="card-info">
+                        <div>
+                            <span>🏷️</span>
+                            <span>${chamado.categoria?.nome || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span>🏘️</span>
+                            <span>${chamado.bairro?.nome || 'N/A'}</span>
+                        </div>
+                        <div>
+                            <span>⚠️</span>
+                            <span class="badge ${chamado.prioridade}">${formatPrioridade(chamado.prioridade)}</span>
+                        </div>
+                        <div>
+                            <span>📅</span>
+                            <span>${formatDate(chamado.data_criacao)}</span>
+                        </div>
+                        ${chamado.avaliacao ? `
+                        <div>
+                            <span>⭐</span>
+                            <span>${'⭐'.repeat(chamado.avaliacao.nota)} (${chamado.avaliacao.nota}/5)</span>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        ['filter-search', 'filter-status', 'filter-prioridade'].forEach(id => {
+            document.getElementById(id).addEventListener('input', filterChamados);
+        });
+
+        function filterChamados() {
+            const search = document.getElementById('filter-search').value.toLowerCase();
+            const status = document.getElementById('filter-status').value;
+            const prioridade = document.getElementById('filter-prioridade').value;
+            
+            let filtered = allChamados;
+            
+            if (search) {
+                filtered = filtered.filter(c => 
+                    c.protocolo.toLowerCase().includes(search) ||
+                    c.titulo.toLowerCase().includes(search)
+                );
+            }
+            
+            if (status) {
+                filtered = filtered.filter(c => c.status === status);
+            }
+            
+            if (prioridade) {
+                filtered = filtered.filter(c => c.prioridade === prioridade);
+            }
+            
+            renderChamados(filtered);
+        }
+
+        document.getElementById('novo-chamado-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            formData.append('titulo', document.getElementById('titulo').value);
+            formData.append('descricao', document.getElementById('descricao').value);
+            formData.append('latitude', document.getElementById('latitude').value);
+            formData.append('longitude', document.getElementById('longitude').value);
+            formData.append('endereco', document.getElementById('endereco').value);
+            formData.append('categoria_id', document.getElementById('categoria').value);
+            formData.append('bairro_id', document.getElementById('bairro').value);
+            formData.append('prioridade', 'media'); // Padrão: média (secretaria define depois)
+            
+            const foto = document.getElementById('foto').files[0];
+            if (foto) {
+                formData.append('foto', foto);
+            }
+            
+            showLoading();
+            
+            try {
+                const token = getToken();
+                const response = await fetch(API_BASE + '/chamados', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    showToast('Chamado criado! Protocolo: ' + data.protocolo);
+                    document.getElementById('novo-chamado-form').reset();
+                    
+                    if (map && marker) {
+                        marker.setLatLng([-1.4558, -48.4902]);
+                        map.setView([-1.4558, -48.4902], 13);
+                    }
+                    
+                    document.getElementById('map-instructions').textContent = '🗺️ Clique no mapa para marcar a localização';
+                    document.getElementById('map-instructions').classList.remove('success');
+                    
+                    document.querySelector('.tab-button[data-tab="chamados"]').click();
+                    await loadChamados();
+                } else {
+                    showToast(data.detail || 'Erro ao criar chamado', 'error');
+                }
+            } catch (error) {
+                showToast('Erro: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        });
+
+        async function showDetails(id) {
+            showLoading();
+            
+            try {
+                const response = await apiRequest(`/chamados/${id}`);
+                const chamado = await response.json();
+                
+                const canUpdateStatus = currentUser.tipo === 'equipe' || currentUser.tipo === 'gestor' || currentUser.tipo === 'admin' || currentUser.tipo === 'secretaria';
+                const canEvaluate = currentUser.tipo === 'cidadao' && chamado.status === 'resolvido' && !chamado.avaliacao;
+                
+                document.getElementById('modal-body').innerHTML = `
+                    <div style="display: grid; gap: 20px;">
+                        <div>
+                            <h3>${chamado.titulo}</h3>
+                            <p style="color: var(--secondary);">${chamado.protocolo}</p>
+                        </div>
+                        
+                        <div>
+                            <strong>📄 Descrição:</strong>
+                            <p style="margin-top: 8px;">${chamado.descricao}</p>
+                        </div>
+                        
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px;">
+                            <div>
+                                <strong>📊 Status:</strong>
+                                <div style="margin-top: 8px;">
+                                    <span class="badge ${chamado.status}">${formatStatus(chamado.status)}</span>
+                                </div>
+                            </div>
+                            <div>
+                                <strong>⚠️ Prioridade:</strong>
+                                <div style="margin-top: 8px;">
+                                    <span class="badge ${chamado.prioridade}">${formatPrioridade(chamado.prioridade)}</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        ${chamado.foto_url ? `
+                        <div>
+                            <strong>📸 Foto:</strong>
+                            <img src="${chamado.foto_url}" style="width: 100%; max-width: 400px; border-radius: 8px; margin-top: 10px;">
+                        </div>
+                        ` : ''}
+                        
+                        ${chamado.avaliacao ? `
+                        <div style="background: #f0fdf4; padding: 15px; border-radius: 8px;">
+                            <strong>⭐ Avaliação:</strong>
+                            <div style="margin-top: 10px; font-size: 1.5rem;">
+                                ${'⭐'.repeat(chamado.avaliacao.nota)}
+                            </div>
+                            ${chamado.avaliacao.comentario ? `
+                            <p style="margin-top: 10px;">${chamado.avaliacao.comentario}</p>
+                            ` : ''}
+                        </div>
+                        ` : ''}
+                        
+                        ${canUpdateStatus ? `
+                        <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                            <strong>🔧 Atualizar Status:</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                                <button class="btn btn-secondary" onclick="updateStatus(${id}, 'em_andamento')">
+                                    Em Andamento
+                                </button>
+                                <button class="btn btn-success" onclick="updateStatus(${id}, 'resolvido')">
+                                    ✅ Resolvido
+                                </button>
+                                <button class="btn" style="background: var(--info); color: white;" onclick="closeModal(); abrirModalReclassificar(${id})">
+                                    🔄 Reclassificar
+                                </button>
+                            </div>
+                            
+                            <strong style="margin-top: 20px; display: block;">⚠️ Definir Prioridade:</strong>
+                            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                                <button class="btn" style="background: #3b82f6;" onclick="updatePrioridade(${id}, 'baixa')">
+                                    Baixa
+                                </button>
+                                <button class="btn" style="background: #f59e0b;" onclick="updatePrioridade(${id}, 'media')">
+                                    Média
+                                </button>
+                                <button class="btn" style="background: #f97316;" onclick="updatePrioridade(${id}, 'alta')">
+                                    Alta
+                                </button>
+                                <button class="btn" style="background: #ef4444;" onclick="updatePrioridade(${id}, 'critica')">
+                                    Crítica
+                                </button>
+                            </div>
+                        </div>
+                        ` : ''}
+                        
+                        ${canEvaluate ? `
+                        <div style="border-top: 1px solid var(--border); padding-top: 20px;">
+                            <strong>⭐ Avaliar Atendimento:</strong>
+                            <form id="avaliacao-form" onsubmit="submitAvaliacao(event, ${id})">
+                                <div class="rating-stars" id="rating-stars">
+                                    ${[1,2,3,4,5].map(i => `<span class="star" data-rating="${i}">⭐</span>`).join('')}
+                                </div>
+                                <input type="hidden" id="rating-value" required>
+                                <div class="form-group">
+                                    <label>💬 Comentário (opcional):</label>
+                                    <textarea id="comentario" placeholder="Como foi o atendimento?"></textarea>
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    Enviar Avaliação
+                                </button>
+                            </form>
+                        </div>
+                        ` : ''}
+                        
+                        <!-- SEÇÃO DE COMENTÁRIOS -->
+                        <div class="comentarios-secao">
+                            <h3 style="margin-bottom: 20px;">💬 Comentários</h3>
+                            
+                            <!-- Formulário para Novo Comentário (apenas usuários internos) -->
+                            ${['equipe', 'gestor', 'admin', 'secretaria'].includes(currentUser.tipo) ? `
+                            <div class="form-comentario">
+                                <h4 style="margin-bottom: 15px;">➕ Adicionar Comentário</h4>
+                                <div class="form-group">
+                                    <textarea 
+                                        id="novo-comentario-texto" 
+                                        placeholder="Digite seu comentário..."
+                                        style="min-height: 80px;"
+                                    ></textarea>
+                                </div>
+                                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px;">
+                                    <div class="form-group" style="margin: 0;">
+                                        <label>Tipo:</label>
+                                        <select id="novo-comentario-tipo">
+                                            <option value="atualizacao">📝 Atualização</option>
+                                            <option value="observacao">💡 Observação</option>
+                                            <option value="resolucao">✅ Resolução</option>
+                                        </select>
+                                    </div>
+                                    <div class="form-group" style="margin: 0;">
+                                        <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                            <input type="checkbox" id="novo-comentario-visivel" checked>
+                                            <span>👁️ Visível para cidadão</span>
+                                        </label>
+                                    </div>
+                                </div>
+                                <button class="btn btn-primary" onclick="adicionarComentario(${id})">
+                                    💬 Adicionar Comentário
+                                </button>
+                            </div>
+                            ` : ''}
+                            
+                            <!-- Lista de Comentários -->
+                            <div id="comentarios-container">
+                                <div style="text-align: center; padding: 20px; color: var(--secondary);">
+                                    Carregando comentários...
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                
+                if (canEvaluate) {
+                    const stars = document.querySelectorAll('.star');
+                    stars.forEach(star => {
+                        star.addEventListener('click', () => {
+                            const rating = parseInt(star.dataset.rating);
+                            document.getElementById('rating-value').value = rating;
+                            
+                            stars.forEach((s, i) => {
+                                if (i < rating) {
+                                    s.classList.add('filled');
+                                } else {
+                                    s.classList.remove('filled');
+                                }
+                            });
+                        });
+                    });
+                }
+                
+                // Carregar comentários
+                await atualizarComentariosModal(id);
+                
+                document.getElementById('modal-detalhes').classList.add('active');
+            } catch (error) {
+                showToast('Erro ao carregar detalhes', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('modal-detalhes').classList.remove('active');
+        }
+
+        async function updateStatus(id, status) {
+            if (!confirm(`Confirma alteração para "${formatStatus(status)}"?`)) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await apiRequest(`/chamados/${id}/status`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ status })
+                });
+                
+                if (response.ok) {
+                    showToast('Status atualizado!');
+                    closeModal();
+                    await loadChamados();
+                } else {
+                    const data = await response.json();
+                    showToast(data.detail || 'Erro', 'error');
+                }
+            } catch (error) {
+                showToast('Erro: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function updatePrioridade(id, prioridade) {
+            if (!confirm(`Definir prioridade como "${formatPrioridade(prioridade)}"?`)) {
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await apiRequest(`/chamados/${id}/prioridade`, {
+                    method: 'PATCH',
+                    body: JSON.stringify({ prioridade })
+                });
+                
+                if (response.ok) {
+                    showToast('Prioridade atualizada!');
+                    closeModal();
+                    await loadChamados();
+                } else {
+                    const data = await response.json();
+                    showToast(data.detail || 'Erro', 'error');
+                }
+            } catch (error) {
+                showToast('Erro: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function submitAvaliacao(event, chamadoId) {
+            event.preventDefault();
+            
+            const nota = parseInt(document.getElementById('rating-value').value);
+            const comentario = document.getElementById('comentario').value;
+            
+            if (!nota) {
+                showToast('Selecione uma nota', 'warning');
+                return;
+            }
+            
+            showLoading();
+            
+            try {
+                const response = await apiRequest(`/chamados/${chamadoId}/avaliar`, {
+                    method: 'POST',
+                    body: JSON.stringify({ nota, comentario })
+                });
+                
+                if (response.ok) {
+                    showToast('Avaliação enviada!');
+                    closeModal();
+                    await loadChamados();
+                } else {
+                    const data = await response.json();
+                    showToast(data.detail || 'Erro', 'error');
+                }
+            } catch (error) {
+                showToast('Erro: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function loadDashboard() {
+            showLoading();
+            
+            try {
+                const response = await apiRequest('/relatorios/dashboard');
+                
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar dashboard');
+                }
+                
+                const data = await response.json();
+                
+                // Total de chamados
+                document.getElementById('stat-total').textContent = data.total_chamados || 0;
+                
+                // Em andamento
+                const emAndamento = data.por_status?.find(s => s.status === 'em_andamento');
+                document.getElementById('stat-andamento').textContent = emAndamento?.total || 0;
+                
+                // Resolvidos
+                const resolvidos = data.por_status?.find(s => s.status === 'resolvido');
+                document.getElementById('stat-resolvidos').textContent = resolvidos?.total || 0;
+                
+                // Avaliação média
+                document.getElementById('stat-avaliacao').textContent = (data.avaliacao_media || 0).toFixed(1);
+                
+                // Top Categorias
+                if (data.top_categorias && data.top_categorias.length > 0) {
+                    const categoriasHtml = data.top_categorias.map(item => {
+                        const percentage = data.total_chamados > 0 ? (item.total / data.total_chamados * 100).toFixed(1) : 0;
+                        return `
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span>${item.categoria.icone || '📌'} ${item.categoria.nome}</span>
+                                    <span><strong>${item.total}</strong> (${percentage}%)</span>
+                                </div>
+                                <div class="chart-bar">
+                                    <div class="chart-fill" style="width: ${percentage}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    document.getElementById('chart-categorias').innerHTML = categoriasHtml;
+                } else {
+                    document.getElementById('chart-categorias').innerHTML = '<p style="text-align: center; color: var(--secondary); padding: 20px;">Nenhum dado disponível</p>';
+                }
+                
+                // Top Bairros
+                if (data.top_bairros && data.top_bairros.length > 0) {
+                    const bairrosHtml = data.top_bairros.map(item => {
+                        const percentage = data.total_chamados > 0 ? (item.total / data.total_chamados * 100).toFixed(1) : 0;
+                        return `
+                            <div class="chart-item">
+                                <div class="chart-label">
+                                    <span>🏘️ ${item.bairro.nome}</span>
+                                    <span><strong>${item.total}</strong> (${percentage}%)</span>
+                                </div>
+                                <div class="chart-bar">
+                                    <div class="chart-fill" style="width: ${percentage}%"></div>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                    document.getElementById('chart-bairros').innerHTML = bairrosHtml;
+                } else {
+                    document.getElementById('chart-bairros').innerHTML = '<p style="text-align: center; color: var(--secondary); padding: 20px;">Nenhum dado disponível</p>';
+                }
+                
+                // Chamados Recentes
+                if (data.recentes && data.recentes.length > 0) {
+                    const recentesHtml = data.recentes.slice(0, 6).map(chamado => `
+                        <div class="card" onclick="showDetails(${chamado.id})">
+                            <div class="card-header">
+                                <div>
+                                    <div class="card-title">${chamado.titulo}</div>
+                                    <div class="card-protocolo">${chamado.protocolo}</div>
+                                </div>
+                                <span class="badge ${chamado.status}">${formatStatus(chamado.status)}</span>
+                            </div>
+                            <div class="card-info">
+                                <div>
+                                    <span>🏷️</span>
+                                    <span>${chamado.categoria?.nome || 'N/A'}</span>
+                                </div>
+                                <div>
+                                    <span>📅</span>
+                                    <span>${formatDate(chamado.created_at)}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+                    document.getElementById('chamados-recentes').innerHTML = recentesHtml;
+                } else {
+                    document.getElementById('chamados-recentes').innerHTML = '<p style="text-align: center; color: var(--secondary); padding: 40px;">Nenhum chamado recente</p>';
+                }
+                
+            } catch (error) {
+                console.error('Erro no dashboard:', error);
+                showToast('Erro ao carregar dashboard: ' + error.message, 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function formatStatus(status) {
+            const map = {
+                'aberto': 'Aberto',
+                'em_andamento': 'Em Andamento',
+                'resolvido': 'Resolvido',
+                'cancelado': 'Cancelado'
+            };
+            return map[status] || status;
+        }
+
+        function formatPrioridade(prioridade) {
+            const map = {
+                'baixa': 'Baixa',
+                'media': 'Média',
+                'alta': 'Alta',
+                'critica': 'Crítica'
+            };
+            return map[prioridade] || prioridade;
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleDateString('pt-BR') + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            const token = getToken();
+            const userStr = localStorage.getItem('user');
+            
+            if (token && userStr) {
+                currentUser = JSON.parse(userStr);
+                loadMainApp();
+            }
+            
+            // Carregar catálogo completo
+            carregarCatalogoCompleto();
+        });
+
+        document.getElementById('modal-detalhes').addEventListener('click', (e) => {
+            if (e.target.id === 'modal-detalhes') {
+                closeModal();
+            }
+        });
+    </script>
+
+    <!-- MODAL RECLASSIFICAÇÃO -->
+    <div class="modal" id="modal-reclassificar">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h2>🔄 Reclassificar Chamado</h2>
+                <button class="btn-close" onclick="fecharModalReclassificar()">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="chamado-atual-info" style="background: #f1f5f9; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <h4>Chamado Atual:</h4>
+                    <div id="chamado-atual-dados"></div>
+                </div>
+                
+                <h4>Buscar Serviço no Catálogo:</h4>
+                <div class="form-group">
+                    <input 
+                        type="text" 
+                        id="busca-servico-reclassificar" 
+                        placeholder="Digite para buscar serviço..." 
+                        style="width: 100%;"
+                        oninput="buscarServicosReclassificar()"
+                    >
+                </div>
+                
+                <div class="form-group">
+                    <label>Filtrar por Secretaria:</label>
+                    <select id="filtro-secretaria-reclassificar" onchange="buscarServicosReclassificar()">
+                        <option value="">Todas as Secretarias</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Filtrar por Prioridade:</label>
+                    <select id="filtro-prioridade-reclassificar" onchange="buscarServicosReclassificar()">
+                        <option value="">Todas</option>
+                        <option value="emergencial">⚠️ Emergencial</option>
+                        <option value="alta">🔴 Alta</option>
+                        <option value="media">🟡 Média</option>
+                        <option value="baixa">🟢 Baixa</option>
+                        <option value="agendavel">📅 Agendável</option>
+                    </select>
+                </div>
+                
+                <div id="servicos-lista-reclassificar" style="max-height: 400px; overflow-y: auto;">
+                    <p style="text-align: center; color: #6c757d;">Digite para buscar serviços...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+</body>
+</html>

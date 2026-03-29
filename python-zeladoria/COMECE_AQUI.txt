@@ -1,0 +1,92 @@
+═══════════════════════════════════════════════════════════════
+  🏛️ SISTEMA DE ZELADORIA URBANA - BELÉM/PA
+  GUIA DE INÍCIO RÁPIDO
+═══════════════════════════════════════════════════════════════
+
+📋 PASSO A PASSO:
+
+1️⃣ SETUP INICIAL (Execute APENAS UMA VEZ):
+
+   Duplo clique em: SETUP_COMPLETO.bat
+   
+   Isso vai criar:
+   - ✅ Tabelas no banco
+   - ✅ 5 Secretarias
+   - ✅ 9 Usuários de teste
+   - ✅ 100+ Serviços
+
+───────────────────────────────────────────────────────────────
+
+2️⃣ INICIAR O SISTEMA:
+
+   Duplo clique em: INICIAR_API_8001.bat
+   
+   Aguarde aparecer: "Application startup complete"
+
+───────────────────────────────────────────────────────────────
+
+3️⃣ ACESSAR:
+
+   Abra o navegador em: http://localhost:8001/app
+   
+   Você verá:
+   - Login box no topo direito
+   - Cards das 5 secretarias
+   - Layout da Prefeitura de Belém
+
+───────────────────────────────────────────────────────────────
+
+4️⃣ FAZER LOGIN:
+
+   Use uma das contas de teste:
+
+   👤 ADMIN:
+   Email: admin@zeladoria.com
+   Senha: admin123
+
+   🏗️ SEURB (Urbanismo):
+   Email: seurb@zeladoria.com
+   Senha: seurb123
+
+   ♻️ SESAN (Saneamento):
+   Email: sesan@zeladoria.com
+   Senha: sesan123
+
+───────────────────────────────────────────────────────────────
+
+📚 ACESSOS ÚTEIS:
+
+   Frontend:    http://localhost:8001/app
+   API Docs:    http://localhost:8001/docs
+   Health:      http://localhost:8001/health
+
+───────────────────────────────────────────────────────────────
+
+🔧 SE DER ERRO:
+
+   "Não consigo logar"
+   → Execute: CRIAR_USUARIOS.bat
+
+   "Secretarias não aparecem"
+   → Execute: CRIAR_SECRETARIAS.bat
+
+   "Module not found"
+   → Execute: INSTALAR_TUDO_FALTANDO.bat
+
+───────────────────────────────────────────────────────────────
+
+✅ ESTÁ FUNCIONANDO QUANDO:
+
+   ✓ API mostra "Application startup complete"
+   ✓ Frontend abre em /app
+   ✓ Login funciona
+   ✓ Aparecem 5 secretarias (SEURB, SESAN, SEMOB, SEMMA, SESMA)
+   ✓ API docs acessível em /docs
+
+═══════════════════════════════════════════════════════════════
+
+🎉 PRONTO! SISTEMA COMPLETO E FUNCIONANDO!
+
+Leia README_COMPLETO.md para detalhes completos.
+
+═══════════════════════════════════════════════════════════════

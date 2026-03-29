@@ -1,0 +1,19 @@
+# ============================================
+# RAILWAY CONFIG
+# Sistema de Zeladoria Urbana - Belém/PA
+#
+# Como usar:
+#   1. Instale Railway CLI: npm i -g @railway/cli
+#   2. railway login
+#   3. railway init (dentro da pasta do projeto)
+#   4. Configure os serviços no dashboard
+# ============================================
+
+[build]
+builder = "DOCKERFILE"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 300
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3

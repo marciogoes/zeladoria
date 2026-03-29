@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Tarefas</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>📝 Gerenciador de Tarefas</h1>
+            <p>Aplicação Full-Stack com FastAPI + SQLite</p>
+        </header>
+
+        <!-- Formulário de Nova Tarefa -->
+        <section class="form-section">
+            <h2>✨ Nova Tarefa</h2>
+            <form id="taskForm">
+                <div class="form-group">
+                    <label for="title">Título *</label>
+                    <input type="text" id="title" required placeholder="Digite o título da tarefa">
+                </div>
+                <div class="form-group">
+                    <label for="description">Descrição</label>
+                    <textarea id="description" rows="3" placeholder="Adicione uma descrição (opcional)"></textarea>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">
+                        <span id="btnText">➕ Adicionar Tarefa</span>
+                    </button>
+                    <button type="button" id="cancelBtn" class="btn btn-secondary" style="display: none;">
+                        ❌ Cancelar
+                    </button>
+                </div>
+            </form>
+        </section>
+
+        <!-- Filtros -->
+        <section class="filters">
+            <button class="filter-btn active" data-filter="all">Todas</button>
+            <button class="filter-btn" data-filter="pending">Pendentes</button>
+            <button class="filter-btn" data-filter="completed">Concluídas</button>
+        </section>
+
+        <!-- Lista de Tarefas -->
+        <section class="tasks-section">
+            <div class="tasks-header">
+                <h2>📋 Minhas Tarefas</h2>
+                <span id="taskCount" class="task-count">0 tarefas</span>
+            </div>
+            <div id="tasksList" class="tasks-list">
+                <!-- Tarefas serão inseridas aqui via JavaScript -->
+            </div>
+        </section>
+    </div>
+
+    <!-- Loading Spinner -->
+    <div id="loading" class="loading" style="display: none;">
+        <div class="spinner"></div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>

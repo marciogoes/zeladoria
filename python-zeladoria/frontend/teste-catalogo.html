@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Teste Catálogo</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            margin: 0;
+        }
+        .container {
+            background: white;
+            padding: 60px;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .btn {
+            display: inline-block;
+            padding: 20px 40px;
+            margin: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            color: white;
+            background: #667eea;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            text-decoration: none;
+            transition: transform 0.2s;
+        }
+        .btn:hover {
+            transform: scale(1.05);
+        }
+        .success {
+            color: #10b981;
+            margin-top: 20px;
+            display: none;
+        }
+        .error {
+            color: #ef4444;
+            margin-top: 20px;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🧪 Teste de Catálogo</h1>
+        <p>Clique em um dos botões abaixo:</p>
+        
+        <!-- Botão 1: Link simples -->
+        <a href="catalogo.html" target="_blank" class="btn">
+            🔗 Abrir Catálogo (Link)
+        </a>
+        
+        <br>
+        
+        <!-- Botão 2: JavaScript -->
+        <button onclick="abrirCatalogo()" class="btn">
+            🚀 Abrir Catálogo (JavaScript)
+        </button>
+        
+        <br>
+        
+        <!-- Botão 3: Window.location -->
+        <button onclick="window.location.href='catalogo.html'" class="btn">
+            📍 Ir Para Catálogo
+        </button>
+        
+        <div class="success" id="success">✅ Funcionou!</div>
+        <div class="error" id="error">❌ Erro ao abrir</div>
+    </div>
+    
+    <script>
+        function abrirCatalogo() {
+            try {
+                const win = window.open('catalogo.html', '_blank');
+                if (win) {
+                    document.getElementById('success').style.display = 'block';
+                    setTimeout(() => {
+                        document.getElementById('success').style.display = 'none';
+                    }, 3000);
+                } else {
+                    document.getElementById('error').style.display = 'block';
+                    document.getElementById('error').textContent = '❌ Popup bloqueado! Use outro botão';
+                }
+            } catch (e) {
+                document.getElementById('error').style.display = 'block';
+                document.getElementById('error').textContent = '❌ Erro: ' + e.message;
+            }
+        }
+        
+        console.log('🧪 Página de teste carregada!');
+        console.log('📍 URL atual:', window.location.href);
+        console.log('📁 URL do catálogo deveria ser:', window.location.origin + '/catalogo.html');
+    </script>
+</body>
+</html>

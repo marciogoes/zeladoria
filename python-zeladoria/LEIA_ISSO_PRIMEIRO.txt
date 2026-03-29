@@ -1,0 +1,53 @@
+══════════════════════════════════════════════════════════════
+  ⚠️ IMPORTANTE - LEIA ANTES DE EXECUTAR
+══════════════════════════════════════════════════════════════
+
+O erro que você viu foi porque o banco de dados já existia com
+a estrutura ANTIGA (sem secretarias e sem secretaria_id).
+
+══════════════════════════════════════════════════════════════
+  ✅ SOLUÇÃO
+══════════════════════════════════════════════════════════════
+
+Execute o SETUP_COMPLETO.bat NOVAMENTE.
+
+Agora ele vai:
+✅ Deletar o banco antigo
+✅ Criar banco novo com estrutura correta
+✅ Popular secretarias
+✅ Criar usuários
+✅ Popular catálogo
+
+══════════════════════════════════════════════════════════════
+  🚀 PASSO A PASSO
+══════════════════════════════════════════════════════════════
+
+1. Execute: SETUP_COMPLETO.bat
+   (Vai resetar e criar tudo do zero)
+
+2. Execute: INICIAR_API_8001.bat
+   (Vai iniciar a API)
+
+3. Acesse: http://localhost:8001/app
+   (Vai abrir o frontend)
+
+4. Faça login:
+   admin@zeladoria.com / admin123
+
+══════════════════════════════════════════════════════════════
+  📋 O QUE MUDOU
+══════════════════════════════════════════════════════════════
+
+Agora o sistema tem:
+✅ Tabela de Secretarias (secretarias)
+✅ Usuários com secretaria_id
+✅ 5 Secretarias (SEURB, SESAN, SEMOB, SEMMA, SESMA)
+✅ 9 Usuários de teste (incluindo perfil secretaria)
+✅ 100+ Serviços catalogados
+✅ Frontend com layout da Prefeitura de Belém
+
+══════════════════════════════════════════════════════════════
+
+Execute agora: SETUP_COMPLETO.bat
+
+══════════════════════════════════════════════════════════════

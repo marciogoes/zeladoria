@@ -1,0 +1,393 @@
+# ============================================
+# GITIGNORE - SISTEMA DE ZELADORIA URBANA
+# Belém do Pará
+# ============================================
+
+# ============================================
+# PYTHON
+# ============================================
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Translations
+*.mo
+*.pot
+
+# Django stuff:
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Flask stuff:
+instance/
+.webassets-cache
+
+# Scrapy stuff:
+.scrapy
+
+# Sphinx documentation
+docs/_build/
+
+# PyBuilder
+target/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# IPython
+profile_default/
+ipython_config.py
+
+# pyenv
+.python-version
+
+# pipenv
+Pipfile.lock
+
+# PEP 582
+__pypackages__/
+
+# Celery stuff
+celerybeat-schedule
+celerybeat.pid
+
+# SageMath parsed files
+*.sage.py
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# Spyder project settings
+.spyderproject
+.spyproject
+
+# Rope project settings
+.ropeproject
+
+# mkdocs documentation
+/site
+
+# mypy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Pyre type checker
+.pyre/
+
+# ============================================
+# BANCO DE DADOS
+# ============================================
+
+# SQLite
+*.db
+*.sqlite
+*.sqlite3
+zeladoria.db
+
+# PostgreSQL
+*.pgsql
+
+# MySQL
+*.mysql
+
+# Backups de banco
+*.sql.gz
+*.sql.bz2
+*.dump
+
+# ============================================
+# LOGS
+# ============================================
+
+logs/
+*.log
+*.log.*
+*.out
+
+# ============================================
+# UPLOADS E ARQUIVOS TEMPORÁRIOS
+# ============================================
+
+uploads/
+temp/
+tmp/
+*.tmp
+
+# ============================================
+# BACKUPS
+# ============================================
+
+backups/
+*.backup
+*.bak
+*.tar.gz
+*.zip
+
+# ============================================
+# IDE / EDITORES
+# ============================================
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# PyCharm
+.idea/
+*.iml
+*.iws
+.idea_modules/
+
+# Sublime Text
+*.sublime-project
+*.sublime-workspace
+
+# Vim
+*.swp
+*.swo
+*~
+
+# Emacs
+*~
+\#*\#
+/.emacs.desktop
+/.emacs.desktop.lock
+*.elc
+
+# ============================================
+# SISTEMA OPERACIONAL
+# ============================================
+
+# Windows
+Thumbs.db
+ehthumbs.db
+Desktop.ini
+$RECYCLE.BIN/
+*.cab
+*.msi
+*.msix
+*.msm
+*.msp
+*.lnk
+
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+._*
+.DocumentRevisions-V100
+.fseventsd
+.Spotlight-V100
+.TemporaryItems
+.Trashes
+.VolumeIcon.icns
+.com.apple.timemachine.donotpresent
+
+# Linux
+*~
+.directory
+.Trash-*
+
+# ============================================
+# CONFIGURAÇÃO E SECRETS
+# ============================================
+
+# Variáveis de ambiente
+.env
+.env.local
+.env.*.local
+.env.production
+.env.staging
+.env.development
+
+# Secrets e chaves
+secrets/
+*.pem
+*.key
+*.crt
+*.cer
+*.p12
+*.pfx
+
+# Configurações sensíveis
+config/local.py
+config/production.py
+settings/local.py
+settings/production.py
+
+# ============================================
+# DOCKER
+# ============================================
+
+# Dados do Docker
+docker-compose.override.yml
+.dockerignore
+
+# ============================================
+# CACHE E COMPILADOS
+# ============================================
+
+# Cache geral
+.cache/
+*.cache
+
+# NPM (se houver frontend separado)
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# ============================================
+# DOCUMENTAÇÃO TEMPORÁRIA
+# ============================================
+
+# Drafts e temporários
+*.draft
+*.todo
+NOTAS.md
+TODO.md
+temp.md
+
+# ============================================
+# TESTES
+# ============================================
+
+# Coverage reports
+.coverage
+htmlcov/
+coverage.xml
+
+# Test databases
+test.db
+test.sqlite
+test.sqlite3
+
+# ============================================
+# DEPLOYMENT
+# ============================================
+
+# Static files coletados
+staticfiles/
+static_root/
+
+# Media files em produção (se houver)
+# media/
+
+# ============================================
+# FERRAMENTAS DE BUILD
+# ============================================
+
+# Webpack
+.webpack/
+webpack-stats.json
+
+# Parcel
+.parcel-cache/
+
+# ============================================
+# ANALYTICS E MONITORAMENTO
+# ============================================
+
+# Sentry
+.sentryclirc
+
+# ============================================
+# OUTROS
+# ============================================
+
+# Arquivos de migração temporários
+migrations/versions/*.pyc
+
+# Sessões
+.sessions/
+
+# PID files
+*.pid
+
+# Socket files
+*.sock
+
+# Certificados SSL locais
+ssl/
+
+# Dados de exemplo/teste (opcional)
+# data/test/
+# fixtures/test/
+
+# ============================================
+# MANTER DIRETÓRIOS VAZIOS
+# ============================================
+
+# Se você quer manter diretórios vazios no git,
+# crie um arquivo .gitkeep dentro deles e não
+# adicione o diretório aqui
+
+# ============================================
+# EXCEÇÕES (ARQUIVOS QUE DEVEM SER COMMITADOS)
+# ============================================
+
+# Descomente se quiser incluir algo específico
+# !uploads/.gitkeep
+# !logs/.gitkeep
+# !backups/.gitkeep
+
+# ============================================
+# FIM
+# ============================================
