@@ -57,16 +57,21 @@ from app.database.database import SessionLocal
 from app.models.usuario import Usuario
 db = SessionLocal()
 try:
-    db.query(Usuario).delete()
-    db.commit()
-    print('Usuarios limpos')
+    count = db.query(Usuario).count()
+    print(f'Usuarios existentes: {count}')
+    if count > 0:
+        db.query(Usuario).delete()
+        db.commit()
+        print('Usuarios removidos para re-seed')
 except Exception as e:
     print(f'Aviso limpeza: {e}')
     db.rollback()
 finally:
     db.close()
-" || true
-    python seed.py || true
+"
+    echo "🌱 Executando seed..."
+    python seed.py
+    echo "✅ Seed concluido!"
 fi
 
 # ==========================================

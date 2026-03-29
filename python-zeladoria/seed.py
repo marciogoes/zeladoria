@@ -5,7 +5,6 @@ Com Secretarias Municipais Reais
 """
 
 from datetime import datetime, timedelta
-from passlib.context import CryptContext
 from sqlalchemy.orm import Session
 
 from app.database import engine, SessionLocal, Base
@@ -14,13 +13,10 @@ from app.models import (
     Chamado, StatusChamado, PrioridadeChamado, Avaliacao
 )
 
-# Contexto para hash de senhas
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
 
 def criar_hash_senha(senha: str) -> str:
-    """Cria hash da senha"""
-    return pwd_context.hash(senha)
+    """Cria hash da senha usando o mesmo metodo do model"""
+    return Usuario.hash_senha(senha)
 
 
 def limpar_banco():
