@@ -3,7 +3,7 @@ Schemas Pydantic para Catálogo de Serviços
 Sistema de Zeladoria Urbana - Belém/PA
 """
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, ConfigDict
 from typing import Optional
 from datetime import datetime
 from app.models_servicos import PrioridadeServico, StatusServico
@@ -105,8 +105,7 @@ class ServicoResponse(ServicoBase):
     prioridade_label: str
     custo_formatado: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ============================================================================
@@ -131,8 +130,7 @@ class ServicoListItem(BaseModel):
     prioridade_label: str
     custo_formatado: str
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ServicosListResponse(BaseModel):
@@ -225,8 +223,7 @@ class ServicoBuscaResult(BaseModel):
     custo_formatado: str
     relevancia: float = Field(default=1.0, description="Score de relevância")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class AutocompleteResponse(BaseModel):

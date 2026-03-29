@@ -29,7 +29,7 @@ async def health_check():
         "status": "ok",
         "timestamp": datetime.now().isoformat(),
         "service": "Sistema de Zeladoria Urbana - Belém/PA",
-        "version": "2.0.0"
+        "version": "3.0.0"
     }
 
 

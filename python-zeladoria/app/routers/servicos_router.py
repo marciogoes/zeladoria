@@ -245,7 +245,7 @@ def busca_avancada(
         if servico.descricao and q_lower in servico.descricao.lower():
             relevancia += 0.5
         
-        resultado = ServicoBuscaResult.from_orm(servico)
+        resultado = ServicoBuscaResult.model_validate(servico)
         resultado.relevancia = relevancia
         resultados.append(resultado)
     

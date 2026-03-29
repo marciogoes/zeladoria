@@ -2,22 +2,48 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-import os
+from contextlib import asynccontextmanager
+import os, logging
 
-from app.database.database import engine, Base
+from app.database.database import engine, Base, SessionLocal
 from app.routes import auth, chamados, categorias, bairros, usuarios, relatorios, secretarias, comentarios
 from app.routers.servicos_router import router as servicos_router
 from app.routers.catalogo_router import router as catalogo_router
 from app.routers.engajamento_router import router as engajamento_router
+from app.routers.integracoes_router import router as integracoes_router
+from app.routers.transparencia_router import router as transparencia_router, router_publico
+from app.routers.contratos_router import router as contratos_router
+from app.utils.scheduler_sla import iniciar_scheduler, parar_scheduler
+from app.health import router as health_router
+
+# Sentry (Sprint 8) — ativa apenas se SENTRY_DSN estiver configurado
+SENTRY_DSN = os.environ.get("SENTRY_DSN", "")
+if SENTRY_DSN:
+    import sentry_sdk
+    sentry_sdk.init(dsn=SENTRY_DSN, traces_sample_rate=0.1)
+    logging.getLogger("zelo").info("Sentry ativado")
+
+logger = logging.getLogger("zelo")
+
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    """Startup / Shutdown com scheduler de SLA."""
+    iniciar_scheduler(SessionLocal)
+    logger.info("Scheduler SLA iniciado")
+    yield
+    parar_scheduler()
+    logger.info("Scheduler SLA encerrado")
 
 # Criar tabelas
 Base.metadata.create_all(bind=engine)
 
 # Inicializar FastAPI
 app = FastAPI(
-    title="🏛️ Sistema de Zeladoria Urbana - Belém/PA",
-    description="API completa para gestão de zeladoria urbana municipal",
-    version="2.0.0"
+    title="🏛️ Zelô — Zeladoria Urbana de Belém/PA",
+    description="Plataforma integrada de zeladoria urbana municipal — Belém, Pará",
+    version="3.0.0",
+    lifespan=lifespan,
 )
 
 # CORS
@@ -36,6 +62,10 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 frontend_path = "frontend"
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
+
+    @app.get("/landing")
+    def serve_landing():
+        return FileResponse(os.path.join(frontend_path, "landing.html"))
 
     @app.get("/app")
     def serve_app():
@@ -65,13 +95,18 @@ app.include_router(secretarias.router, tags=["Secretarias"])
 app.include_router(servicos_router, tags=["Catálogo de Serviços"])
 app.include_router(catalogo_router, tags=["Catálogo Completo"])
 app.include_router(engajamento_router)
+app.include_router(integracoes_router)
+app.include_router(transparencia_router)
+app.include_router(router_publico)
+app.include_router(contratos_router)
+app.include_router(health_router, tags=["Health Check"])
 
 # Rota raiz
 @app.get("/")
 def read_root():
     return {
-        "message": "🏛️ Sistema de Zeladoria Urbana - Belém/PA",
-        "version": "2.0.0",
+        "message": "🏛️ Zelô — Zeladoria Urbana de Belém/PA",
+        "version": "3.0.0",
         "docs": "/docs",
         "app": "/app",
         "dashboard": "/dashboard",
@@ -84,14 +119,6 @@ def read_root():
             "servicos": "/api/servicos",
             "catalogo": "/api/catalogo"
         }
-    }
-
-# Health check
-@app.get("/health")
-def health_check():
-    return {
-        "status": "ok",
-        "message": "Sistema funcionando perfeitamente"
     }
 
 if __name__ == "__main__":

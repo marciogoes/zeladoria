@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, ForeignKey  # ForeignKey já importado
 from sqlalchemy.orm import relationship
 from app.database.database import Base
 import bcrypt
@@ -18,7 +18,7 @@ class Usuario(Base):
     avatar = Column(String)
     
     # Relacionamento com Secretaria (NULLABLE)
-    secretaria_id = Column(Integer, nullable=True)
+    secretaria_id = Column(Integer, ForeignKey("secretarias.id"), nullable=True)
 
     # Relacionamentos
     chamados = relationship("Chamado", back_populates="usuario", foreign_keys="Chamado.usuario_id")
