@@ -9,26 +9,36 @@ set -e
 echo "🚀 Iniciando Sistema de Zeladoria Urbana..."
 
 # ==========================================
-# AGUARDAR BANCO DE DADOS
+# AGUARDAR BANCO DE DADOS (usando Python)
 # ==========================================
 if [ "$DATABASE_URL" ]; then
     echo "⏳ Aguardando banco de dados..."
     
-    # Extrair host do DATABASE_URL
-    DB_HOST=$(echo $DATABASE_URL | sed -n 's/.*@\([^:]*\).*/\1/p')
-    DB_PORT=$(echo $DATABASE_URL | sed -n 's/.*:\([0-9]*\)\/.*/\1/p')
-    
-    if [ -z "$DB_PORT" ]; then
-        DB_PORT=5432
-    fi
-    
-    # Aguardar até que o banco esteja disponível
-    until pg_isready -h "$DB_HOST" -p "$DB_PORT" -U zeladoria 2>/dev/null; do
-        echo "⏳ Aguardando PostgreSQL em $DB_HOST:$DB_PORT..."
+    MAX_TRIES=30
+    COUNT=0
+    until python -c "
+import sys, os
+url = os.environ.get('DATABASE_URL', '')
+if not url or 'sqlite' in url:
+    sys.exit(0)
+try:
+    import psycopg2
+    conn = psycopg2.connect(url, connect_timeout=3)
+    conn.close()
+    sys.exit(0)
+except Exception as e:
+    sys.exit(1)
+" 2>/dev/null; do
+        COUNT=$((COUNT+1))
+        if [ $COUNT -ge $MAX_TRIES ]; then
+            echo "⚠️  Banco não respondeu após $MAX_TRIES tentativas. Iniciando mesmo assim..."
+            break
+        fi
+        echo "⏳ Aguardando banco de dados... ($COUNT/$MAX_TRIES)"
         sleep 2
     done
     
-    echo "✅ Banco de dados disponível!"
+    echo "✅ Banco de dados disponível (ou SQLite)!"
 fi
 
 # ==========================================
@@ -36,14 +46,6 @@ fi
 # ==========================================
 echo "📁 Criando diretórios..."
 mkdir -p uploads logs backups
-
-# ==========================================
-# EXECUTAR MIGRAÇÕES (SE NECESSÁRIO)
-# ==========================================
-if [ -d "migrations" ]; then
-    echo "🔄 Executando migrações do banco de dados..."
-    # alembic upgrade head
-fi
 
 # ==========================================
 # POPULAR DADOS INICIAIS (APENAS PRIMEIRA VEZ)
@@ -54,24 +56,11 @@ if [ "$POPULATE_DATA" = "true" ]; then
 fi
 
 # ==========================================
-# COLETAR ARQUIVOS ESTÁTICOS (SE NECESSÁRIO)
-# ==========================================
-# if [ "$ENVIRONMENT" = "production" ]; then
-#     echo "📦 Coletando arquivos estáticos..."
-#     python manage.py collectstatic --noinput || true
-# fi
-
-# ==========================================
-# HEALTH CHECK INICIAL
-# ==========================================
-echo "💊 Sistema pronto para health checks..."
-
-# ==========================================
 # EXECUTAR COMANDO
 # ==========================================
 echo "🎉 Iniciando aplicação..."
-echo "📡 API: http://localhost:8001"
-echo "📚 Docs: http://localhost:8001/docs"
+echo "📡 API: http://localhost:${PORT:-8001}"
+echo "📚 Docs: http://localhost:${PORT:-8001}/docs"
 echo ""
 
 exec "$@"
