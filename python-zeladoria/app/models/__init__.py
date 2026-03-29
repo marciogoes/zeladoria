@@ -4,5 +4,10 @@ from app.models.categoria import Categoria
 from app.models.bairro import Bairro
 from app.models.chamado import Chamado
 from app.models.comentario import Comentario
+from app.models.gamificacao import VotoChamado, PontosUsuario, ConquistaUsuario
 
-__all__ = ["Usuario", "Secretaria", "Categoria", "Bairro", "Chamado", "Comentario"]
+__all__ = [
+    "Usuario", "Secretaria", "Categoria", "Bairro",
+    "Chamado", "Comentario",
+    "VotoChamado", "PontosUsuario", "ConquistaUsuario",
+]

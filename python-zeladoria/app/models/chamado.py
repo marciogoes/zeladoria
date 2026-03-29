@@ -30,12 +30,16 @@ class Chamado(Base):
     bairro_id = Column(Integer, ForeignKey("bairros.id"))
     responsavel_id = Column(Integer, ForeignKey("usuarios.id"))
 
+    # Votos (Sprint 3)
+    total_votos = Column(Integer, default=0)
+
     # Relacionamentos
     usuario = relationship("Usuario", back_populates="chamados", foreign_keys=[usuario_id])
     responsavel = relationship("Usuario", back_populates="chamados_responsavel", foreign_keys=[responsavel_id])
     categoria = relationship("Categoria", back_populates="chamados")
     bairro = relationship("Bairro", back_populates="chamados")
     comentarios = relationship("Comentario", back_populates="chamado", cascade="all, delete-orphan")
+    votos = relationship("VotoChamado", back_populates="chamado", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)

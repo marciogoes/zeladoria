@@ -8,6 +8,7 @@ from app.database.database import engine, Base
 from app.routes import auth, chamados, categorias, bairros, usuarios, relatorios, secretarias, comentarios
 from app.routers.servicos_router import router as servicos_router
 from app.routers.catalogo_router import router as catalogo_router
+from app.routers.engajamento_router import router as engajamento_router
 
 # Criar tabelas
 Base.metadata.create_all(bind=engine)
@@ -35,16 +36,22 @@ app.mount("/uploads", StaticFiles(directory="uploads"), name="uploads")
 frontend_path = "frontend"
 if os.path.exists(frontend_path):
     app.mount("/static", StaticFiles(directory=frontend_path), name="static")
-    
+
     @app.get("/app")
     def serve_app():
-        """Página de login"""
         return FileResponse(os.path.join(frontend_path, "index.html"))
-    
+
     @app.get("/dashboard")
     def serve_dashboard():
-        """Dashboard principal (após login)"""
         return FileResponse(os.path.join(frontend_path, "dashboard.html"))
+
+    @app.get("/manifest.json")
+    def serve_manifest():
+        return FileResponse(os.path.join(frontend_path, "manifest.json"), media_type="application/manifest+json")
+
+    @app.get("/sw.js")
+    def serve_sw():
+        return FileResponse(os.path.join(frontend_path, "sw.js"), media_type="application/javascript")
 
 # Registrar rotas
 app.include_router(auth.router, prefix="/api/auth", tags=["Autenticação"])
@@ -57,6 +64,7 @@ app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatóri
 app.include_router(secretarias.router, tags=["Secretarias"])
 app.include_router(servicos_router, tags=["Catálogo de Serviços"])
 app.include_router(catalogo_router, tags=["Catálogo Completo"])
+app.include_router(engajamento_router)
 
 # Rota raiz
 @app.get("/")

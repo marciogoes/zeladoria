@@ -4,6 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Zelô — Zeladoria Urbana de Belém</title>
+    <meta name="theme-color" content="#0099aa">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Zelô">
+    <link rel="manifest" href="/manifest.json">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
@@ -1257,6 +1263,111 @@
         }
 
         .hidden { display: none !important; }
+
+        /* ═══ SPRINT 3: VOTAÇÃO ═══ */
+        .voto-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .voto-btn:hover { border-color: var(--border-active); color: var(--accent); }
+        .voto-btn.votou { background: var(--accent-dim); border-color: var(--border-active); color: var(--accent); }
+        .voto-count { font-family: 'Syne', sans-serif; font-weight: 700; }
+
+        /* ═══ SPRINT 4: GAMIFICAÇÃO ═══ */
+        .nivel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--border-active);
+        }
+        .conquista-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .conquista-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+        .conquista-card .icon { font-size: 1.4rem; margin-bottom: 4px; }
+        .conquista-card .name { font-size: 0.72rem; color: var(--text-secondary); }
+        .pts-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 20000;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ═══ SPRINT 4: VOZ ═══ */
+        .voice-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            background: var(--bg-elevated);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        .voice-btn:hover { border-color: rgba(220,38,38,0.4); color: #dc2626; }
+        .voice-btn.recording { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,0.06); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+        /* ═══ NAV GAMIFICAÇÃO ═══ */
+        .pts-sidebar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pts-sidebar .pts-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .pts-sidebar .pts-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
     </style>
 </head>
 <body>
@@ -1387,6 +1498,13 @@
                 </div>
             </div>
         </div>
+        <div class="pts-sidebar" id="pts-sidebar" style="display:none">
+            <div>
+                <div class="pts-num" id="sidebar-pts">0</div>
+                <div class="pts-lbl">pontos Zelô</div>
+            </div>
+            <div class="nivel-badge" id="sidebar-nivel">iniciante</div>
+        </div>
 
         <nav class="sidebar-nav">
             <div class="nav-section">Principal</div>
@@ -1404,6 +1522,28 @@
             <div class="nav-section">Gestão</div>
             <button class="nav-item hidden" data-tab="dashboard" id="nav-dashboard">
                 <span class="icon">📊</span> Dashboard
+            </button>
+            <button class="nav-item hidden" data-tab="perfil" id="nav-perfil">
+                <span class="icon">🏆</span> Meu Perfil
+            </button>
+            <button class="nav-item hidden" data-tab="ranking" id="nav-ranking">
+                <span class="icon">🌟</span> Ranking
+            </button>
+            <button class="nav-item hidden" data-tab="mapa" id="nav-mapa">
+                <span class="icon">🗺️</span> Mapa de Calor
+            </button>
+            <button class="nav-item hidden" data-tab="clusters" id="nav-clusters">
+                <span class="icon">🔍</span> Agrupamentos
+            </button>
+            <button class="nav-item hidden" data-tab="clima" id="nav-clima">
+                <span class="icon">🌧️</span> Alertas Clima
+            </button>
+            <button class="nav-item hidden" data-tab="relatorio" id="nav-relatorio">
+                <span class="icon">📄</span> Relatório Público
+            </button>
+            <div class="nav-section">Comunidade</div>
+            <button class="nav-item" data-tab="ranking">
+                <span class="icon">🏆</span> Ranking Cidadãos
             </button>
         </nav>
 
@@ -1477,7 +1617,10 @@
 
                 <div class="field">
                     <label>Descrição detalhada</label>
-                    <textarea id="descricao" placeholder="Descreva o problema com detalhes..." required></textarea>
+                    <button type="button" class="voice-btn" id="voice-btn" onclick="toggleVoz()">
+                        🎙️ <span id="voice-label">Ditar descrição por voz</span>
+                    </button>
+                    <textarea id="descricao" placeholder="Descreva o problema com detalhes ou use o botão de voz acima..." required></textarea>
                 </div>
 
                 <div class="form-row">
@@ -1546,6 +1689,75 @@
                 <a href="/static/catalogo.html" target="_blank" class="btn-primary" style="display:inline-block; text-decoration:none; max-width:240px;">
                     Abrir Catálogo →
                 </a>
+            </div>
+        </div>
+
+        <!-- MAPA DE CALOR -->
+        <div class="page" id="page-mapa">
+            <div class="page-header"><div><h1>Mapa de Calor</h1><p>Concentração de ocorrências em Belém</p></div></div>
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <select id="mapa-status" onchange="carregarMapa()" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                        <option value="">Todos os status</option>
+                        <option value="aberto">Abertos</option>
+                        <option value="em_andamento">Em andamento</option>
+                        <option value="resolvido">Resolvidos</option>
+                    </select>
+                    <select id="mapa-dias" onchange="carregarMapa()" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                        <option value="7">7 dias</option>
+                        <option value="30" selected>30 dias</option>
+                        <option value="90">90 dias</option>
+                        <option value="365">1 ano</option>
+                    </select>
+                    <span id="mapa-total" style="font-size:0.85rem;color:var(--text-secondary);padding:8px 0;"></span>
+                </div>
+            </div>
+            <div id="mapa-calor" style="height:500px;border-radius:12px;border:1px solid var(--border);"></div>
+        </div>
+
+        <!-- CLUSTERS -->
+        <div class="page" id="page-clusters">
+            <div class="page-header"><div><h1>Agrupamentos Inteligentes</h1><p>Chamados próximos que podem ser atendidos juntos</p></div></div>
+            <div id="clusters-lista" style="display:flex;flex-direction:column;gap:14px;">
+                <div class="empty-state"><div class="empty-icon">🔍</div><p>Carregando agrupamentos...</p></div>
+            </div>
+        </div>
+
+        <!-- ALERTAS CLIMA -->
+        <div class="page" id="page-clima">
+            <div class="page-header"><div><h1>Alertas Climáticos</h1><p>Prevenção baseada na previsão do tempo</p></div></div>
+            <div id="clima-alertas" style="display:flex;flex-direction:column;gap:14px;">
+                <div class="empty-state"><div class="empty-icon">🌧️</div><p>Verificando clima...</p></div>
+            </div>
+        </div>
+
+        <!-- RELATÓRIO PÚBLICO -->
+        <div class="page" id="page-relatorio">
+            <div class="page-header">
+                <div><h1>Relatório Público</h1><p>Prestação de contas à comunidade</p></div>
+                <button class="btn-secondary" onclick="imprimirRelatorio()">Imprimir 🖨️</button>
+            </div>
+            <div style="display:flex;gap:10px;margin-bottom:20px;">
+                <select id="rel-mes" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                    <option value="1">Janeiro</option><option value="2">Fevereiro</option><option value="3">Março</option>
+                    <option value="4">Abril</option><option value="5">Maio</option><option value="6">Junho</option>
+                    <option value="7">Julho</option><option value="8">Agosto</option><option value="9">Setembro</option>
+                    <option value="10">Outubro</option><option value="11">Novembro</option><option value="12">Dezembro</option>
+                </select>
+                <select id="rel-ano" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                    <option value="2026">2026</option><option value="2025">2025</option>
+                </select>
+                <button class="btn-secondary" onclick="carregarRelatorio()">Gerar Relatório</button>
+            </div>
+            <div id="relatorio-conteudo"></div>
+        </div>
+
+        <!-- RANKING -->
+        <div class="page" id="page-ranking">
+            <div class="page-header"><div><h1>Ranking de Cidadãos</h1><p>Os mais engajados na zeladoria de Belém</p></div></div>
+            <div id="meu-perfil-gamer" style="margin-bottom:20px;"></div>
+            <div id="ranking-lista" style="display:flex;flex-direction:column;gap:8px;">
+                <div class="empty-state"><div class="empty-icon">🏆</div><p>Carregando ranking...</p></div>
             </div>
         </div>
 
@@ -1650,6 +1862,7 @@
 
 <!-- ═══════════════════════════════════════ SCRIPTS ═══ -->
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
 <script src="/static/catalogo-helper.js"></script>
 <script src="/static/reclassificacao.js"></script>
 <script src="/static/dashboard-executivo.js"></script>
