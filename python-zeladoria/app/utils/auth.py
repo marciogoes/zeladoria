@@ -7,8 +7,13 @@ from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models.usuario import Usuario
 
-# Configurações JWT
-SECRET_KEY = "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"
+import os
+
+# Configurações JWT — SECRET_KEY vem do ambiente em produção
+SECRET_KEY = os.environ.get(
+    "SECRET_KEY",
+    "09d25e094faa6ca2556c818166b7a9563b93f7099f6f0f4caa6cf63b88e8d3e7"  # fallback só para dev
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 30 * 24 * 60  # 30 dias
 

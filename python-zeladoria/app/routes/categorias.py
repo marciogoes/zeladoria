@@ -20,7 +20,7 @@ def criar_categoria(
     current_user: Usuario = Depends(require_role("gestor", "admin")),
     db: Session = Depends(get_db)
 ):
-    categoria = Categoria(**categoria_data.dict())
+    categoria = Categoria(**categoria_data.model_dump())
     db.add(categoria)
     db.commit()
     db.refresh(categoria)

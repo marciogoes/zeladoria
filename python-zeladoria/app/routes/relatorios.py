@@ -86,6 +86,18 @@ def obter_dashboard(
                 "total": b.total
             } for b in top_bairros
         ],
-        "recentes": recentes,
+        "recentes": [
+            {
+                "id": r.id,
+                "protocolo": r.protocolo,
+                "titulo": r.titulo,
+                "status": r.status,
+                "prioridade": r.prioridade,
+                "created_at": r.created_at.isoformat() if r.created_at else None,
+                "categoria": {"nome": r.categoria.nome, "icone": r.categoria.icone} if r.categoria else None,
+                "bairro": {"nome": r.bairro.nome} if r.bairro else None,
+            }
+            for r in recentes
+        ],
         "avaliacao_media": round(float(avaliacao_media), 1)
     }
