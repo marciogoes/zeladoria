@@ -24,12 +24,14 @@ RUN npm run build
 # ESTÁGIO 2: Servir com Nginx
 FROM nginx:alpine
 
+# Instalar gettext para envsubst
+RUN apk add --no-cache gettext
+
 # Copiar arquivos buildados
 COPY --from=builder /app/dist /usr/share/nginx/html
 
-# Copiar config do nginx para SPA (react-router-dom)
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf
+# Copiar config do nginx como template
+COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
 
-EXPOSE 80
-
-CMD ["nginx", "-g", "daemon off;"]
+# Script de inicialização que substitui $PORT e inicia o nginx
+CMD ["/bin/sh", "-c", "envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
