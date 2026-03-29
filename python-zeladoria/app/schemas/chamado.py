@@ -41,6 +41,9 @@ class ChamadoResponse(ChamadoBase):
     usuario_id: int
     responsavel_id: Optional[int] = None
     
+    # Votos
+    total_votos: Optional[int] = 0
+
     # Relacionamentos
     usuario: Optional[UsuarioResponse] = None
     responsavel: Optional[UsuarioResponse] = None

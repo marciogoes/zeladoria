@@ -8,7 +8,7 @@ from app.database.database import get_db
 from app.models.comentario import Comentario
 from app.models.chamado import Chamado
 from app.models.usuario import Usuario
-from app.routes.auth import get_current_user
+from app.utils.auth import get_current_user
 
 router = APIRouter(prefix="/api/chamados/{chamado_id}/comentarios")
 

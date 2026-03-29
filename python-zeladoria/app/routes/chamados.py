@@ -113,41 +113,31 @@ async def criar_chamado(
 @router.put("/{chamado_id}", response_model=ChamadoResponse)
 async def atualizar_chamado(
     chamado_id: int,
-    chamado_data: ChamadoUpdate,
+    status: Optional[str] = Form(None),
+    prioridade: Optional[str] = Form(None),
+    responsavel_id: Optional[int] = Form(None),
     foto: Optional[UploadFile] = File(None),
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     chamado = db.query(Chamado).filter(Chamado.id == chamado_id).first()
-    
     if not chamado:
         raise HTTPException(404, "Chamado não encontrado")
-    
-    # Cidadão não pode atualizar
     if current_user.tipo == "cidadao":
         raise HTTPException(403, "Sem permissão para atualizar")
-    
-    # Atualizar campos
-    if chamado_data.status:
-        chamado.status = chamado_data.status
-        if chamado_data.status == "resolvido":
+    if status:
+        chamado.status = status
+        if status == "resolvido":
             chamado.data_resolucao = datetime.utcnow()
-    
-    if chamado_data.prioridade:
-        chamado.prioridade = chamado_data.prioridade
-    
-    if chamado_data.responsavel_id:
-        chamado.responsavel_id = chamado_data.responsavel_id
-    
-    # Upload foto depois
+    if prioridade:
+        chamado.prioridade = prioridade
+    if responsavel_id:
+        chamado.responsavel_id = responsavel_id
     if foto:
         chamado.foto_depois = await save_upload_file(foto)
-    
     chamado.updated_at = datetime.utcnow()
-    
     db.commit()
     db.refresh(chamado)
-    
     return chamado
 
 @router.post("/{chamado_id}/avaliar", response_model=ChamadoResponse)
@@ -178,58 +168,48 @@ def avaliar_chamado(
     
     return chamado
 
+class StatusUpdate(BaseModel):
+    status: str
+
+class PrioridadeUpdate(BaseModel):
+    prioridade: str
+
 @router.patch("/{chamado_id}/status", response_model=ChamadoResponse)
 def atualizar_status(
     chamado_id: int,
-    status_data: dict,
+    status_data: StatusUpdate,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     chamado = db.query(Chamado).filter(Chamado.id == chamado_id).first()
-    
     if not chamado:
         raise HTTPException(404, "Chamado não encontrado")
-    
-    # Cidadão não pode atualizar status
     if current_user.tipo == "cidadao":
         raise HTTPException(403, "Sem permissão")
-    
-    novo_status = status_data.get('status')
-    if novo_status:
-        chamado.status = novo_status
-        if novo_status == "resolvido":
-            chamado.data_resolucao = datetime.utcnow()
-        chamado.updated_at = datetime.utcnow()
-    
+    chamado.status = status_data.status
+    if status_data.status == "resolvido":
+        chamado.data_resolucao = datetime.utcnow()
+    chamado.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(chamado)
-    
     return chamado
 
 @router.patch("/{chamado_id}/prioridade", response_model=ChamadoResponse)
 def atualizar_prioridade(
     chamado_id: int,
-    prioridade_data: dict,
+    prioridade_data: PrioridadeUpdate,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db)
 ):
     chamado = db.query(Chamado).filter(Chamado.id == chamado_id).first()
-    
     if not chamado:
         raise HTTPException(404, "Chamado não encontrado")
-    
-    # Apenas secretaria, gestor e admin podem definir prioridade
     if current_user.tipo not in ["secretaria", "gestor", "admin", "equipe"]:
         raise HTTPException(403, "Sem permissão")
-    
-    nova_prioridade = prioridade_data.get('prioridade')
-    if nova_prioridade:
-        chamado.prioridade = nova_prioridade
-        chamado.updated_at = datetime.utcnow()
-    
+    chamado.prioridade = prioridade_data.prioridade
+    chamado.updated_at = datetime.utcnow()
     db.commit()
     db.refresh(chamado)
-    
     return chamado
 
 # ============================================================================

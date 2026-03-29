@@ -15,7 +15,7 @@ class VotoChamado(Base):
     criado_em = Column(DateTime, default=datetime.utcnow)
 
     usuario = relationship("Usuario")
-    chamado = relationship("Chamado")
+    chamado = relationship("Chamado", back_populates="votos")
 
 
 class PontosUsuario(Base):

@@ -5,6 +5,7 @@ Sistema de Zeladoria Urbana - Belém/PA
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy import func, Integer
 from typing import List
 from datetime import datetime
 
@@ -21,36 +22,36 @@ router = APIRouter(prefix="/api/engajamento", tags=["Engajamento"])
 # CONSTANTES DE PONTUAÇÃO
 # ──────────────────────────────────────────────
 PTS = {
-    "abrir_chamado": 10,
-    "votar": 2,
-    "avaliar": 5,
-    "chamado_resolvido": 15,
+    "abrir_chamado":    10,
+    "votar":             2,
+    "avaliar":           5,
+    "chamado_resolvido":15,
 }
 
 NIVEIS = [
-    (0,    "iniciante",   "🌱"),
-    (50,   "colaborador", "⭐"),
-    (150,  "guardião",    "🛡️"),
-    (350,  "zelador",     "🏅"),
-    (700,  "mestre",      "👑"),
+    (0,   "iniciante",   "🌱"),
+    (50,  "colaborador", "⭐"),
+    (150, "guardião",    "🛡️"),
+    (350, "zelador",     "🏅"),
+    (700, "mestre",      "👑"),
 ]
 
 CONQUISTAS = [
-    ("primeiro_chamado",  1,   "🎯", "Abriu o primeiro chamado"),
-    ("5_chamados",        5,   "📋", "5 chamados abertos"),
-    ("20_chamados",       20,  "🔥", "20 chamados — cidadão ativo"),
-    ("primeiro_voto",     1,   "👍", "Deu o primeiro upvote"),
-    ("10_votos",          10,  "💪", "10 upvotes dados"),
-    ("primeira_avaliacao",1,   "⭐", "Avaliou o primeiro chamado"),
+    ("primeiro_chamado",   "🎯", "Abriu o primeiro chamado"),
+    ("5_chamados",         "📋", "5 chamados abertos"),
+    ("20_chamados",        "🔥", "20 chamados — cidadão ativo"),
+    ("primeiro_voto",      "👍", "Deu o primeiro upvote"),
+    ("10_votos",           "💪", "10 upvotes dados"),
+    ("primeira_avaliacao", "⭐", "Avaliou o primeiro chamado"),
 ]
 
 
 def calcular_nivel(pontos: int) -> tuple:
     nivel = NIVEIS[0]
-    for pts, nome, icone in NIVEIS:
-        if pontos >= pts:
-            nivel = (pts, nome, icone)
-    return nivel
+    for item in NIVEIS:
+        if pontos >= item[0]:
+            nivel = item
+    return nivel  # (limite, nome, icone)
 
 
 def get_ou_criar_pontos(db: Session, usuario_id: int) -> PontosUsuario:
@@ -81,20 +82,24 @@ def verificar_conquistas(db: Session, usuario_id: int, pts: PontosUsuario) -> Li
         if condicao and codigo not in existentes:
             info = next((c for c in CONQUISTAS if c[0] == codigo), None)
             if info:
-                nova = ConquistaUsuario(usuario_id=usuario_id, conquista=codigo, icone=info[2], descricao=info[3])
+                nova = ConquistaUsuario(
+                    usuario_id=usuario_id,
+                    conquista=codigo,
+                    icone=info[1],
+                    descricao=info[2],
+                )
                 db.add(nova)
-                novas.append({"conquista": codigo, "icone": info[2], "descricao": info[3]})
+                novas.append({"conquista": codigo, "icone": info[1], "descricao": info[2]})
 
     if novas:
         db.commit()
     return novas
 
 
-def adicionar_pontos(db: Session, usuario_id: int, acao: str, **kwargs):
+def adicionar_pontos(db: Session, usuario_id: int, acao: str) -> List[dict]:
     """Adiciona pontos e verifica conquistas."""
     pts = get_ou_criar_pontos(db, usuario_id)
-    ganho = PTS.get(acao, 0)
-    pts.total_pontos += ganho
+    pts.total_pontos += PTS.get(acao, 0)
 
     if acao == "abrir_chamado":
         pts.chamados_abertos += 1
@@ -119,14 +124,13 @@ def adicionar_pontos(db: Session, usuario_id: int, acao: str, **kwargs):
 def votar_chamado(
     chamado_id: int,
     current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    """Upvote num chamado. Um cidadão, um voto."""
-    chamado = db.query(Chamado).filter_by(id=chamado_id).first()
+    """Upvote num chamado — toggle. Um cidadão, um voto."""
+    chamado = db.query(Chamado).filter(Chamado.id == chamado_id).first()
     if not chamado:
         raise HTTPException(404, "Chamado não encontrado")
 
-    # Não pode votar no próprio chamado
     if chamado.usuario_id == current_user.id:
         raise HTTPException(400, "Você não pode votar no seu próprio chamado")
 
@@ -135,13 +139,11 @@ def votar_chamado(
     ).first()
 
     if voto_existente:
-        # Remover voto (toggle)
         db.delete(voto_existente)
         chamado.total_votos = max(0, (chamado.total_votos or 0) - 1)
         db.commit()
         return {"votou": False, "total_votos": chamado.total_votos}
 
-    # Adicionar voto
     try:
         voto = VotoChamado(usuario_id=current_user.id, chamado_id=chamado_id)
         db.add(voto)
@@ -158,9 +160,9 @@ def votar_chamado(
 def ver_votos(
     chamado_id: int,
     current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-    chamado = db.query(Chamado).filter_by(id=chamado_id).first()
+    chamado = db.query(Chamado).filter(Chamado.id == chamado_id).first()
     if not chamado:
         raise HTTPException(404, "Chamado não encontrado")
 
@@ -178,13 +180,12 @@ def ver_votos(
 @router.get("/meu-perfil")
 def meu_perfil_gamificacao(
     current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     pts = get_ou_criar_pontos(db, current_user.id)
     conquistas = db.query(ConquistaUsuario).filter_by(usuario_id=current_user.id).all()
     _, nivel, icone_nivel = calcular_nivel(pts.total_pontos)
 
-    # Próximo nível
     proximo = None
     for limite, nome, icone in NIVEIS:
         if pts.total_pontos < limite:
@@ -200,21 +201,32 @@ def meu_perfil_gamificacao(
         "votos_dados": pts.votos_dados,
         "avaliacoes_feitas": pts.avaliacoes_feitas,
         "proximo_nivel": proximo,
-        "conquistas": [{"conquista": c.conquista, "icone": c.icone, "descricao": c.descricao, "data": c.desbloqueada_em} for c in conquistas],
+        "conquistas": [
+            {
+                "conquista": c.conquista,
+                "icone": c.icone,
+                "descricao": c.descricao,
+                "data": c.desbloqueada_em.isoformat() if c.desbloqueada_em else None,
+            }
+            for c in conquistas
+        ],
     }
 
 
 @router.get("/ranking")
 def ranking_cidadaos(
     limit: int = 10,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
     """Top cidadãos por pontuação."""
-    ranking = db.query(PontosUsuario, Usuario).join(
-        Usuario, PontosUsuario.usuario_id == Usuario.id
-    ).filter(
-        Usuario.tipo == "cidadao"
-    ).order_by(PontosUsuario.total_pontos.desc()).limit(limit).all()
+    ranking = (
+        db.query(PontosUsuario, Usuario)
+        .join(Usuario, PontosUsuario.usuario_id == Usuario.id)
+        .filter(Usuario.tipo == "cidadao")
+        .order_by(PontosUsuario.total_pontos.desc())
+        .limit(limit)
+        .all()
+    )
 
     return [
         {
@@ -230,30 +242,38 @@ def ranking_cidadaos(
 
 @router.get("/ranking-bairros")
 def ranking_bairros(db: Session = Depends(get_db)):
-    """Bairros com mais chamados resolvidos — ranking de zeladoria."""
-    from sqlalchemy import func
-
-    resultado = db.query(
-        Bairro.nome,
-        Bairro.regiao,
-        func.count(Chamado.id).label("total"),
-        func.sum(
-            (Chamado.status == "resolvido").cast(Integer)
-        ).label("resolvidos"),
-    ).join(Chamado, Chamado.bairro_id == Bairro.id, isouter=True
-    ).group_by(Bairro.id
-    ).order_by(func.count(Chamado.id).desc()).all()
-
-    from sqlalchemy import Integer
-    resultado = db.query(
-        Bairro.nome,
-        Bairro.regiao,
-        func.count(Chamado.id).label("total"),
-    ).join(Chamado, Chamado.bairro_id == Bairro.id, isouter=True
-    ).group_by(Bairro.id
-    ).order_by(func.count(Chamado.id).desc()).limit(10).all()
+    """Bairros com mais chamados — ranking de zeladoria."""
+    resultado = (
+        db.query(
+            Bairro.nome,
+            Bairro.regiao,
+            func.count(Chamado.id).label("total"),
+        )
+        .join(Chamado, Chamado.bairro_id == Bairro.id, isouter=True)
+        .group_by(Bairro.id)
+        .order_by(func.count(Chamado.id).desc())
+        .limit(10)
+        .all()
+    )
 
     return [
         {"bairro": r.nome, "regiao": r.regiao, "total_chamados": r.total}
         for r in resultado
     ]
+
+
+@router.post("/chamados/{chamado_id}/pontos-abertura")
+def registrar_pontos_abertura(
+    chamado_id: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Chamado após criar — registra pontos de abertura."""
+    novas_conquistas = adicionar_pontos(db, current_user.id, "abrir_chamado")
+    pts = get_ou_criar_pontos(db, current_user.id)
+    return {
+        "pontos_ganhos": PTS["abrir_chamado"],
+        "total_pontos": pts.total_pontos,
+        "nivel": pts.nivel,
+        "novas_conquistas": novas_conquistas,
+    }
