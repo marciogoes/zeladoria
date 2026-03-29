@@ -72,7 +72,7 @@ USER zeladoria
 
 # Health check
 HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
-    CMD curl -f http://localhost:8001/health || exit 1
+    CMD curl -f http://localhost:${PORT:-8001}/health || exit 1
 
 # Script de inicialização
 COPY --chown=zeladoria:zeladoria docker-entrypoint.sh /docker-entrypoint.sh
@@ -80,7 +80,7 @@ RUN chmod +x /docker-entrypoint.sh
 
 # Comando padrão
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
+CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port ${PORT:-8001}"]
 
 # ==========================================
 # INSTRUÇÕES DE BUILD E USO
