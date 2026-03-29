@@ -2,8 +2,8 @@
 Sprints 11–12 — Inteligência Artificial
 Triagem automática, análise de foto, previsão de demanda, relatório mensal
 """
-import os, json
-from typing import Optional, List
+import os
+from typing import Optional
 from datetime import datetime, timedelta
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
@@ -15,7 +15,7 @@ from app.models.chamado import Chamado
 from app.models.bairro import Bairro
 from app.models.categoria import Categoria
 from app.models.usuario import Usuario
-from app.models.sprints_9_12 import LogTriagemIA, PrevisaoDemanda, RelatorioMensal
+from app.models.sprints_9_12 import LogTriagemIA, RelatorioMensal
 from app.utils.auth import get_current_user, require_role
 
 router = APIRouter(prefix="/api/ia", tags=["Inteligência Artificial"])
@@ -409,19 +409,6 @@ def gerar_relatorio_mensal(
     return {"relatorio_id": rel_id, **dados}
 
 
-@router.get("/relatorio/{ano}/{mes}")
-def obter_relatorio(
-    ano: int,
-    mes: int,
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    rel = db.query(RelatorioMensal).filter_by(ano=ano, mes=mes).first()
-    if not rel:
-        raise HTTPException(404, f"Relatório {mes:02d}/{ano} não encontrado. Gere primeiro via POST /api/ia/relatorio/gerar")
-    return {"relatorio_id": rel.id, "ano": rel.ano, "mes": rel.mes, **rel.dados}
-
-
 @router.get("/relatorio/historico")
 def historico_relatorios(
     current_user: Usuario = Depends(require_role("admin", "gestor")),
@@ -443,6 +430,19 @@ def historico_relatorios(
     ]
 
 
+@router.get("/relatorio/{ano}/{mes}")
+def obter_relatorio(
+    ano: int,
+    mes: int,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    rel = db.query(RelatorioMensal).filter_by(ano=ano, mes=mes).first()
+    if not rel:
+        raise HTTPException(404, f"Relatório {mes:02d}/{ano} não encontrado. Gere primeiro via POST /api/ia/relatorio/gerar")
+    return {"relatorio_id": rel.id, "ano": rel.ano, "mes": rel.mes, **rel.dados}
+
+
 # ─────────────────────────────────────────
 # PAINEL PÚBLICO EM TEMPO REAL — Sprint 12
 # (Para telão em locais públicos)
@@ -456,8 +456,8 @@ def painel_publico_tempo_real(db: Session = Depends(get_db)):
     """
     agora = datetime.utcnow()
     hoje_inicio = agora.replace(hour=0, minute=0, second=0, microsecond=0)
-    semana_inicio = agora - timedelta(days=agora.weekday())
-    mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0)
+    semana_inicio = (agora - timedelta(days=agora.weekday())).replace(hour=0, minute=0, second=0, microsecond=0)
+    mes_inicio = agora.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
     def contar(inicio, fim=None, **filtros):
         q = db.query(func.count(Chamado.id)).filter(Chamado.created_at >= inicio)

@@ -3,9 +3,9 @@ Sprints 9–10 — Geoespacial Avançado
 Mapa de calor em tempo real, clustering, rastreamento GPS equipes, alertas clima
 """
 import os, math, httpx
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime, timedelta
-from fastapi import APIRouter, Depends, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
@@ -13,7 +13,6 @@ from pydantic import BaseModel
 from app.database.database import get_db
 from app.models.chamado import Chamado
 from app.models.bairro import Bairro
-from app.models.categoria import Categoria
 from app.models.usuario import Usuario
 from app.models.sprints_9_12 import EquipeLocalizacao, OrdemServico
 from app.utils.auth import get_current_user, require_role
@@ -336,9 +335,6 @@ def mapa_equipes(
     Posição mais recente de cada equipe de campo.
     Para exibição no mapa do gestor em tempo real.
     """
-    # Última localização de cada equipe (subquery)
-    from sqlalchemy import distinct
-
     usuarios_equipe = (
         db.query(Usuario)
         .filter(Usuario.tipo.in_(["equipe", "secretaria"]), Usuario.ativo == True)
@@ -499,7 +495,7 @@ def saude_bairro(bairro_id: int, db: Session = Depends(get_db)):
 # ─────────────────────────────────────────
 
 @router.get("/clima/alertas")
-async def alertas_climaticos(db: Session = Depends(get_db)):
+async def alertas_climaticos():
     """
     Alertas preventivos de clima de Belém.
     Usa OpenWeatherMap se OPENWEATHER_API_KEY configurado.
