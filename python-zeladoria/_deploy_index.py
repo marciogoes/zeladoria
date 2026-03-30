@@ -11,14 +11,13 @@ with open(out, 'w', encoding='utf-8') as f:
     f.write(content)
 
 print(f'index.html escrito: {len(content)} chars -> {out}')
-print(f'  Paginacao S17: {"_totalPaginas" in content}')
-print(f'  Timeline S17:  {"mostrarTimeline" in content}')
-print(f'  Tempo medio:   {"stat-tempo-medio" in content}')
+print(f'  Paginacao S17:   {"_totalPaginas" in content}')
+print(f'  Timeline S17:    {"mostrarTimeline" in content}')
+print(f'  Tempo medio:     {"stat-tempo-medio" in content}')
 print(f'  Bugs corrigidos: {"avaliacao: nota, comentario_avaliacao:" in content}')
 print()
 print('Sprint 17 aplicado com sucesso!')
 
-# Cleanup
 for fn in ['_idx_p1.b64', '_idx_p2.b64', '_deploy_index.py']:
     fp = os.path.join(d, fn)
     if os.path.exists(fp):
