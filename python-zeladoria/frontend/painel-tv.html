@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zelô — Painel Público</title>
+    <meta http-equiv="refresh" content="60"><!-- auto-refresh a cada 60s -->
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --accent: #00d4aa;
+            --accent2: #2563eb;
+            --dark: #050d1a;
+            --card: #0d1f35;
+            --border: rgba(0,212,170,0.15);
+            --text: #e2e8f0;
+            --muted: #64748b;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--dark);
+            color: var(--text);
+            font-family: 'DM Sans', sans-serif;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── HEADER ── */
+        header {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 24px 40px 16px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .logo {
+            font-family: 'Syne', sans-serif;
+            font-size: 2rem; font-weight: 800; color: #f0f4ff;
+        }
+        .logo span { color: var(--accent); }
+
+        .header-right {
+            display: flex; align-items: center; gap: 24px;
+        }
+
+        .live-dot {
+            width: 10px; height: 10px;
+            border-radius: 50%;
+            background: var(--accent);
+            box-shadow: 0 0 12px var(--accent);
+            animation: blink 1.5s ease infinite;
+        }
+        @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.3} }
+
+        .time-display {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem; font-weight: 700; color: var(--accent);
+        }
+
+        .date-display {
+            font-size: 0.85rem; color: var(--muted);
+        }
+
+        /* ── STATS GRID ── */
+        .stats-section {
+            padding: 28px 40px 0;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 22px 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute; top: 0; left: 0; right: 0; height: 3px;
+        }
+
+        .stat-card.teal::before { background: var(--accent); }
+        .stat-card.blue::before { background: var(--accent2); }
+        .stat-card.green::before { background: #10b981; }
+        .stat-card.amber::before { background: #f59e0b; }
+
+        .stat-label {
+            font-size: 0.72rem; text-transform: uppercase;
+            letter-spacing: 0.1em; color: var(--muted);
+            margin-bottom: 8px;
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 3rem; font-weight: 800; line-height: 1;
+            color: #f0f4ff;
+        }
+
+        .stat-sub { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+
+        /* ── MAIN CONTENT ── */
+        .main-content {
+            display: grid;
+            grid-template-columns: 1.4fr 1fr;
+            gap: 20px;
+            padding: 0 40px 24px;
+        }
+
+        .panel-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 20px 24px;
+        }
+
+        .panel-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.8rem; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.1em;
+            color: var(--accent);
+            margin-bottom: 16px;
+            display: flex; align-items: center; gap: 8px;
+        }
+
+        /* ── TICKER ── */
+        .ticker-wrapper {
+            overflow: hidden;
+            background: var(--card);
+            border-top: 1px solid var(--border);
+            padding: 14px 0;
+        }
+
+        .ticker-inner {
+            display: flex; gap: 80px;
+            animation: ticker 30s linear infinite;
+            white-space: nowrap;
+        }
+
+        @keyframes ticker {
+            from { transform: translateX(0); }
+            to { transform: translateX(-50%); }
+        }
+
+        .ticker-item {
+            font-size: 0.9rem; color: var(--muted);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .ticker-item strong { color: var(--text); }
+        .ticker-item .dot { color: var(--accent); font-size: 0.6rem; }
+
+        /* ── RESOLUCOES LIST ── */
+        .resolucao-item {
+            display: flex; align-items: flex-start; gap: 12px;
+            padding: 10px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+        }
+        .resolucao-item:last-child { border-bottom: none; }
+
+        .resolucao-icon {
+            width: 32px; height: 32px;
+            border-radius: 50%;
+            background: rgba(16,185,129,0.15);
+            border: 1px solid rgba(16,185,129,0.3);
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.85rem; flex-shrink: 0;
+        }
+
+        .resolucao-titulo {
+            font-size: 0.88rem; font-weight: 500; margin-bottom: 2px;
+        }
+
+        .resolucao-meta {
+            font-size: 0.72rem; color: var(--muted);
+        }
+
+        /* ── BARRA DE PROGRESSO ── */
+        .taxa-bar { height: 8px; background: rgba(255,255,255,0.08); border-radius: 4px; overflow: hidden; margin-top: 12px; }
+        .taxa-fill { height: 100%; border-radius: 4px; background: linear-gradient(90deg, var(--accent), #00a0ff); transition: width 1s ease; }
+
+        /* ── BAIRROS ── */
+        .bairro-row {
+            display: flex; align-items: center; gap: 10px;
+            padding: 7px 0;
+        }
+
+        .bairro-name { font-size: 0.85rem; flex: 1; }
+        .bairro-count {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem; font-weight: 700; color: var(--accent);
+        }
+        .bairro-bar-bg { width: 80px; height: 4px; background: rgba(255,255,255,0.08); border-radius: 2px; overflow: hidden; }
+        .bairro-bar-fill { height: 100%; border-radius: 2px; background: var(--accent); }
+
+        /* ── FOOTER ── */
+        footer {
+            text-align: center; padding: 10px;
+            font-size: 0.72rem; color: var(--muted);
+        }
+
+        /* ── ACESSIBILIDADE ── */
+        .acessivel-badge {
+            display: flex; align-items: center; gap: 6px;
+            font-size: 0.72rem; color: var(--muted);
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="logo">Zel<span>ô</span></div>
+    <div class="header-right">
+        <div class="acessivel-badge">
+            <span>Prefeitura Municipal de Belém</span>
+            <span>•</span>
+            <span>Zeladoria Urbana</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <div class="live-dot"></div>
+            <span style="font-size:0.75rem;color:var(--muted);">Tempo Real</span>
+        </div>
+        <div>
+            <div class="time-display" id="clock">--:--</div>
+            <div class="date-display" id="datex">Carregando...</div>
+        </div>
+    </div>
+</header>
+
+<div class="stats-section">
+    <div class="stats-grid">
+        <div class="stat-card teal">
+            <div class="stat-label">Chamados Hoje</div>
+            <div class="stat-value" id="stat-hoje">—</div>
+            <div class="stat-sub">registrados em 24h</div>
+        </div>
+        <div class="stat-card green">
+            <div class="stat-label">Resolvidos Hoje</div>
+            <div class="stat-value" id="stat-resolvidos-hoje">—</div>
+            <div class="stat-sub">atendimentos concluídos</div>
+        </div>
+        <div class="stat-card blue">
+            <div class="stat-label">Taxa do Mês</div>
+            <div class="stat-value" id="stat-taxa">—<span style="font-size:1.5rem;">%</span></div>
+            <div class="stat-sub">de resolução</div>
+            <div class="taxa-bar"><div class="taxa-fill" id="taxa-fill" style="width:0%"></div></div>
+        </div>
+        <div class="stat-card amber">
+            <div class="stat-label">Total Histórico</div>
+            <div class="stat-value" id="stat-total">—</div>
+            <div class="stat-sub">chamados desde o início</div>
+        </div>
+    </div>
+</div>
+
+<div class="main-content">
+    <!-- Últimas resoluções -->
+    <div class="panel-card">
+        <div class="panel-title">✅ Últimos atendimentos concluídos</div>
+        <div id="resolucoes-lista">
+            <p style="color:var(--muted);font-size:0.85rem;">Carregando...</p>
+        </div>
+    </div>
+
+    <!-- Top bairros -->
+    <div class="panel-card">
+        <div class="panel-title">🏘️ Bairros mais ativos (mês)</div>
+        <div id="bairros-lista">
+            <p style="color:var(--muted);font-size:0.85rem;">Carregando...</p>
+        </div>
+        <div style="margin-top:20px;">
+            <div class="panel-title">📊 Status atual</div>
+            <div id="status-atual">
+                <p style="color:var(--muted);font-size:0.85rem;">Carregando...</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Ticker rodapé -->
+<div class="ticker-wrapper">
+    <div class="ticker-inner" id="ticker">
+        <span class="ticker-item">
+            <span class="dot">●</span> Carregando dados em tempo real...
+        </span>
+    </div>
+</div>
+
+<footer>
+    Zelô — Sistema de Zeladoria Urbana de Belém/PA &nbsp;•&nbsp; Atualiza automaticamente a cada 60 segundos &nbsp;•&nbsp; Dados em tempo real via API pública
+</footer>
+
+<script>
+    const API = '/api/ia/painel-publico';
+    const API_STATS = '/api/publico/estatisticas';
+
+    // Relógio
+    function atualizarRelogio() {
+        const now = new Date();
+        document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('datex').textContent = now.toLocaleDateString('pt-BR', {
+            weekday: 'long', day: 'numeric', month: 'long'
+        });
+    }
+    setInterval(atualizarRelogio, 1000);
+    atualizarRelogio();
+
+    // Dados
+    async function carregarDados() {
+        try {
+            const [painelRes, statsRes] = await Promise.all([
+                fetch(API), fetch(API_STATS)
+            ]);
+            const painel = await painelRes.json();
+            const stats = await statsRes.json();
+
+            // Stats cards
+            document.getElementById('stat-hoje').textContent = painel.hoje?.abertos ?? '—';
+            document.getElementById('stat-resolvidos-hoje').textContent = painel.hoje?.resolvidos ?? '—';
+            document.getElementById('stat-taxa').innerHTML = `${painel.mes?.taxa_resolucao ?? 0}<span style="font-size:1.5rem;">%</span>`;
+            document.getElementById('stat-total').textContent = (painel.total_historico ?? 0).toLocaleString('pt-BR');
+
+            const taxa = painel.mes?.taxa_resolucao ?? 0;
+            document.getElementById('taxa-fill').style.width = `${taxa}%`;
+
+            // Últimas resoluções
+            const rels = painel.ultimas_resolucoes || [];
+            document.getElementById('resolucoes-lista').innerHTML = rels.length ? rels.map(r => `
+                <div class="resolucao-item">
+                    <div class="resolucao-icon">✅</div>
+                    <div>
+                        <div class="resolucao-titulo">${r.titulo}</div>
+                        <div class="resolucao-meta">${r.bairro} · Resolvido às ${r.resolvido_em}</div>
+                    </div>
+                </div>
+            `).join('') : '<p style="color:var(--muted);font-size:0.85rem;">Nenhuma resolução recente</p>';
+
+            // Top bairros
+            const bairros = stats.top_bairros || [];
+            const maxBairro = bairros[0]?.total || 1;
+            document.getElementById('bairros-lista').innerHTML = bairros.map(b => `
+                <div class="bairro-row">
+                    <div class="bairro-name">${b.bairro}</div>
+                    <div class="bairro-bar-bg">
+                        <div class="bairro-bar-fill" style="width:${Math.round(b.total/maxBairro*100)}%"></div>
+                    </div>
+                    <div class="bairro-count">${b.total}</div>
+                </div>
+            `).join('');
+
+            // Status atual
+            document.getElementById('status-atual').innerHTML = `
+                <div style="display:flex;gap:16px;flex-wrap:wrap;">
+                    <div style="text-align:center;">
+                        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#10b981;">${painel.semana?.resolvidos ?? 0}</div>
+                        <div style="font-size:0.68rem;color:var(--muted);">Resolvidos esta semana</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:#f59e0b;">${painel.semana?.abertos ?? 0}</div>
+                        <div style="font-size:0.68rem;color:var(--muted);">Abertos esta semana</div>
+                    </div>
+                    <div style="text-align:center;">
+                        <div style="font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent);">${painel.mes?.abertos ?? 0}</div>
+                        <div style="font-size:0.68rem;color:var(--muted);">Total no mês</div>
+                    </div>
+                </div>`;
+
+            // Ticker
+            const cats = stats.top_categorias || [];
+            const tickerItems = [
+                ...rels.map(r => `<span class="ticker-item"><span class="dot">●</span> <strong>RESOLVIDO:</strong> ${r.titulo} — ${r.bairro}</span>`),
+                ...cats.map(c => `<span class="ticker-item"><span class="dot">●</span> ${c.categoria}: <strong>${c.total} chamados</strong> no período</span>`),
+                `<span class="ticker-item"><span class="dot">●</span> Taxa de resolução do mês: <strong>${taxa}%</strong></span>`,
+                `<span class="ticker-item"><span class="dot">●</span> Atendimentos hoje: <strong>${painel.hoje?.resolvidos ?? 0} resolvidos</strong></span>`,
+            ];
+            // Duplica para loop contínuo
+            const fullTicker = [...tickerItems, ...tickerItems].join('&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;');
+            document.getElementById('ticker').innerHTML = fullTicker;
+
+        } catch (e) {
+            console.error('Erro ao carregar dados:', e);
+        }
+    }
+
+    carregarDados();
+    setInterval(carregarDados, 60000);
+</script>
+</body>
+</html>

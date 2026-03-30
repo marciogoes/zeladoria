@@ -1,186 +1,189 @@
-# 🏛️ Sistema de Zeladoria Urbana - Belém/PA
-## 🐍 VERSÃO PYTHON + FASTAPI + SQLITE
+# 🏛️ Zelô — Zeladoria Urbana de Belém/PA
+
+> **Versão 4.0.0** | Preparado para a COP 30 | 16 sprints implementadas
+
+Plataforma integrada de zeladoria urbana municipal para a cidade de Belém do Pará.  
+Conecta cidadãos, equipes de campo, secretarias e gestores em uma única solução.
 
 ---
 
-## ✅ O QUE JÁ ESTÁ CRIADO
+## 🚀 Início rápido
 
-### 📁 Estrutura de Pastas
-```
-python-zeladoria/
-├── app/
-│   ├── database/
-│   ├── models/
-│   ├── routes/
-│   ├── schemas/
-│   └── utils/
-├── uploads/
-├── frontend/
-├── main.py              ✅
-├── requirements.txt     ✅
-└── criar_arquivos.py    ✅
-```
+```bash
+# Windows
+COMECE_AQUI.bat
 
----
-
-## 🚀 INSTALAÇÃO RÁPIDA
-
-### 1️⃣ Criar Ambiente Virtual
-
-```powershell
-cd C:\Users\marci\OneDrive\Documentos\Projetos\zeladoria\python-zeladoria
-python -m venv venv
-venv\Scripts\activate
-```
-
-### 2️⃣ Instalar Dependências
-
-```powershell
+# Linux/Mac
+cd python-zeladoria
+python -m venv venv && source venv/bin/activate
 pip install -r requirements.txt
-```
-
-### 3️⃣ Criar Arquivos Auxiliares
-
-```powershell
-python criar_arquivos.py
-```
-
----
-
-## 📝 ARQUIVOS QUE FALTAM CRIAR
-
-Vou te guiar para criar os arquivos restantes. São apenas **arquivos Python simples**!
-
-### MODELOS (app/models/)
-
-Crie estes arquivos na pasta `app/models/`:
-
-**usuario.py** - Copie da minha resposta anterior
-**categoria.py** - Copie da minha resposta anterior  
-**bairro.py** - Copie da minha resposta anterior
-**chamado.py** - Copie da minha resposta anterior
-
-### SCHEMAS (app/schemas/)
-
-Crie na pasta `app/schemas/`:
-
-**usuario.py** - Validação Pydantic
-**categoria.py** - Validação Pydantic
-**bairro.py** - Validação Pydantic
-**chamado.py** - Validação Pydantic
-
-### ROTAS (app/routes/)
-
-Crie na pasta `app/routes/`:
-
-**auth.py** - Autenticação
-**chamados.py** - CRUD chamados
-**categorias.py** - CRUD categorias
-**bairros.py** - CRUD bairros
-**usuarios.py** - CRUD usuários
-**relatorios.py** - Dashboard
-
-### UTILITÁRIOS (app/utils/)
-
-**auth.py** - JWT e hashing de senha
-**upload.py** - Upload de fotos
-
----
-
-## 🎯 OU FAÇA ASSIM (MAIS RÁPIDO)
-
-Eu posso criar um **ÚNICO ARQUIVO** com tudo!
-
-Crie um arquivo chamado `complete_system.py` e eu te dou o código completo de todos os modelos, schemas e rotas em um arquivo só!
-
----
-
-## 🔧 DEPOIS DE CRIAR TUDO
-
-### Criar Banco e Popular
-
-```python
-# seed.py
-from app.database.database import Base, engine, SessionLocal
-from app.models.usuario import Usuario
-from app.models.categoria import Categoria
-from app.models.bairro import Bairro
-# ...
-
-Base.metadata.create_all(bind=engine)
-# Código para popular...
-```
-
-### Iniciar Servidor
-
-```powershell
-python main.py
-```
-
-Ou:
-
-```powershell
-uvicorn main:app --reload
-```
-
----
-
-## 📊 SISTEMA COMPLETO TERÁ
-
-✅ **Autenticação JWT**
-✅ **CRUD Completo** de Chamados
-✅ **Upload de Fotos**
-✅ **Filtros e Busca**
-✅ **Dashboard com KPIs**
-✅ **4 Perfis** (Cidadão, Equipe, Gestor, Admin)
-✅ **API RESTful Documentada**
-✅ **Frontend Integrado**
-
----
-
-## 🎯 PRÓXIMO PASSO
-
-**Opção A**: Eu crio TODOS os arquivos restantes agora (mais ~15 arquivos)
-**Opção B**: Eu crio UM ÚNICO arquivo Python com tudo dentro
-**Opção C**: Te passo os códigos e você cola manualmente
-
-**Qual você prefere?** 😊
-
----
-
-## 📞 COMANDOS IMPORTANTES
-
-```powershell
-# Ativar venv
-venv\Scripts\activate
-
-# Instalar
-pip install -r requirements.txt
-
-# Popular banco
 python seed.py
+uvicorn main:app --port 8001 --reload
+```
 
-# Iniciar
-python main.py
+**URLs locais:**
+- App: http://localhost:8001/app
+- Landing: http://localhost:8001/landing  
+- Painel TV: http://localhost:8001/tv
+- Docs API: http://localhost:8001/docs
 
-# Acessar
-http://localhost:8000/docs
+**Logins de teste** (senha: `senha123`):
+
+| Perfil | E-mail |
+|--------|--------|
+| Admin | admin@belem.pa.gov.br |
+| Gestor | maria.santos@belem.pa.gov.br |
+| Secretaria | carlos.mendes@seurb.belem.pa.gov.br |
+| Equipe | joao.silva@belem.pa.gov.br |
+| Cidadão | pedro.almeida@email.com |
+
+---
+
+## 🛠️ Stack
+
+| Camada | Tecnologia |
+|--------|------------|
+| Backend | Python 3.11 · FastAPI 0.104 · SQLAlchemy 2.0 |
+| Banco (dev) | SQLite |
+| Banco (prod) | PostgreSQL + PostGIS |
+| Cache | Redis |
+| Scheduler | APScheduler 3.10 |
+| Frontend | HTML5 · Tailwind-like CSS · Leaflet.js |
+| PWA | Service Worker · Web Push · Manifest |
+| CI/CD | GitHub Actions |
+| Deploy | Railway (Docker) |
+| Monitoramento | Sentry |
+
+---
+
+## 📋 Sprints implementadas
+
+### Sprints 1–4 — Fundação & Engajamento
+- ✅ Seed idempotente · PostgreSQL robusto
+- ✅ PWA (manifest + service worker + offline)
+- ✅ Votação em chamados (upvote/toggle)
+- ✅ Gamificação (pontos, níveis, conquistas)
+- ✅ Abertura de chamado por voz (Web Speech API)
+
+### Sprints 5–8 — Integrações & Transparência
+- ✅ Sensores IoT com abertura automática de chamados
+- ✅ Webhook WhatsApp Business
+- ✅ API pública anonimizada (`/api/publico/`)
+- ✅ Orçamento participativo com votação
+- ✅ Auditoria blockchain-like (SHA-256 encadeado)
+- ✅ Gestão de contratos e fornecedores com nota automática
+- ✅ LGPD (exportar/anonimizar/excluir dados)
+- ✅ Scheduler SLA + Sentry + CI/CD
+
+### Sprints 9–12 — Geoespacial & IA
+- ✅ Mapa de calor em tempo real
+- ✅ Clustering DBSCAN + Ordens de Serviço
+- ✅ Rastreamento GPS de equipes
+- ✅ Score de saúde urbana por bairro
+- ✅ Alertas climáticos (OpenWeatherMap)
+- ✅ Triagem automática por IA (regras + log de acurácia)
+- ✅ Análise de foto
+- ✅ Previsão de demanda MA4 por bairro
+- ✅ Relatório mensal estruturado
+- ✅ Painel público em tempo real
+
+### Sprints 13–16 — COP 30, Testes & Polimento
+- ✅ Nheengatu (4º idioma — Língua Geral Amazônica)
+- ✅ SSO com Portal Municipal (OAuth2/OIDC + simulação)
+- ✅ Painel TV dedicado (`/tv`) para telões públicos
+- ✅ Suite de testes pytest (29+ testes)
+- ✅ 18 índices PostgreSQL de performance (criados no startup)
+- ✅ Push Notifications (Web Push + VAPID)
+- ✅ Backup automático diário (SQLite/PostgreSQL)
+- ✅ Relatório mensal automático (Cron job — dia 1, 02:00)
+- ✅ Limpeza GPS automática (LGPD — dados > 7 dias)
+- ✅ Onboarding modal para novos cidadãos
+- ✅ Sidebar dinâmica por perfil (5 perfis distintos)
+- ✅ Versão 4.0.0
+
+---
+
+## 🎭 Perfis de usuário
+
+| Perfil | Acesso |
+|--------|--------|
+| **Cidadão** | Chamados próprios, novo chamado, perfil/gamificação, ranking, propostas |
+| **Equipe** | Chamados atribuídos, ordens de serviço, GPS, mapa |
+| **Secretaria** | Chamados da secretaria, painel SLA, dashboard, triagem IA |
+| **Gestor** | Tudo + equipes no campo, clusters, previsão, relatórios |
+| **Admin** | Tudo + usuários, sensores IoT, contratos, auditoria blockchain |
+
+---
+
+## 🔑 Variáveis de ambiente (Railway)
+
+```env
+# Obrigatórias
+DATABASE_URL=postgresql://...
+SECRET_KEY=<gerar: python -c "import secrets; print(secrets.token_urlsafe(64))">
+
+# Opcionais
+SENTRY_DSN=https://...
+OPENWEATHER_API_KEY=...
+WA_VERIFY_TOKEN=...
+WA_ACCESS_TOKEN=...
+VAPID_PUBLIC_KEY=...
+VAPID_PRIVATE_KEY=...
+SSO_PROVIDER_URL=https://keycloak.belem.pa.gov.br/realms/cidadao
+SSO_CLIENT_ID=zelo-app
+SSO_CLIENT_SECRET=...
+POPULATE_DATA=true  # apenas no primeiro deploy
 ```
 
 ---
 
-## ✨ POR QUE PYTHON É MELHOR AQUI
+## 🧪 Testes
 
-✅ Sintaxe mais simples
-✅ FastAPI = performance incrível
-✅ Pydantic = validação automática
-✅ SQLAlchemy = ORM poderoso
-✅ Documentação automática (Swagger)
-✅ Python 3.14 compatível (com Pydantic v1)
-✅ Você já conhece Python!
+```bash
+cd python-zeladoria
+pytest tests/ -v --tb=short
+```
+
+Cobertura: auth, chamados, API pública, engajamento, IA, health.
 
 ---
 
-**Pronto para continuar?** 🚀
+## 🐳 Docker
 
-Me diga qual opção você prefere e eu completo o sistema!
+```bash
+# Build e run local
+docker build -t zelo-backend ./python-zeladoria
+docker run -p 8001:8001 -e SECRET_KEY=dev-key zelo-backend
+
+# Com docker-compose (banco + redis incluídos)
+docker-compose up -d
+```
+
+---
+
+## 📡 Endpoints principais
+
+| Método | Endpoint | Descrição |
+|--------|----------|-----------|
+| GET | `/api/publico/estatisticas` | Estatísticas públicas |
+| GET | `/api/publico/chamados` | Chamados anonimizados |
+| GET | `/api/ia/painel-publico` | Dados para telão |
+| GET | `/api/geo/heatmap` | Mapa de calor |
+| POST | `/api/ia/triar` | Triagem por IA |
+| GET | `/api/sso/iniciar` | Login via Portal Municipal |
+| GET | `/tv` | Painel TV público |
+| GET | `/landing` | Landing page |
+| GET | `/docs` | Swagger UI |
+
+---
+
+## 🌿 Idiomas suportados
+
+- 🇧🇷 Português (PT-BR)
+- 🇺🇸 English (EN)
+- 🇪🇸 Español (ES)  
+- 🌿 Nheengatu (NHE) — Língua Geral Amazônica
+
+---
+
+*Zelô — Zeladoria Urbana de Belém/PA · Prefeitura Municipal · COP 30 · 2025*

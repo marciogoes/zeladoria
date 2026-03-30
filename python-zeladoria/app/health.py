@@ -18,41 +18,23 @@ router = APIRouter()
 
 @router.get("/health")
 async def health_check():
-    """
-    Health Check básico
-    
-    Retorna:
-        - status: ok
-        - timestamp: data/hora atual
-    """
     return {
         "status": "ok",
         "timestamp": datetime.now().isoformat(),
         "service": "Sistema de Zeladoria Urbana - Belém/PA",
-        "version": "3.0.0"
+        "version": "4.0.0"
     }
 
 
 @router.get("/health/detailed")
 async def detailed_health_check():
-    """
-    Health Check detalhado com informações do sistema
-    
-    Retorna informações sobre:
-        - Status geral
-        - Banco de dados
-        - Sistema operacional
-        - Memória
-        - Disco
-        - CPU
-    """
-    from app.database import engine
-    
+    from app.database.database import engine
+
     health_data = {
         "status": "ok",
         "timestamp": datetime.now().isoformat(),
         "service": "Sistema de Zeladoria Urbana - Belém/PA",
-        "version": "2.0.0",
+        "version": "4.0.0",
         "checks": {}
     }
     
@@ -141,15 +123,7 @@ async def detailed_health_check():
 
 @router.get("/health/readiness")
 async def readiness_check():
-    """
-    Readiness Check - verifica se o serviço está pronto para receber tráfego
-    
-    Usado por:
-        - Kubernetes
-        - Docker Swarm
-        - Load Balancers
-    """
-    from app.database import engine
+    from app.database.database import engine
     
     try:
         # Verificar conexão com banco
@@ -189,10 +163,7 @@ async def liveness_check():
 
 @router.get("/health/startup")
 async def startup_check():
-    """
-    Startup Check - verifica se o serviço inicializou corretamente
-    """
-    from app.database import engine
+    from app.database.database import engine
     
     checks = {
         "database": False,
@@ -243,19 +214,15 @@ async def startup_check():
 
 @router.get("/metrics")
 async def metrics_endpoint():
-    """
-    Endpoint de métricas (formato Prometheus-like)
-    
-    Retorna métricas básicas do sistema para monitoramento
-    """
-    from app.database import engine
-    from app.models import Chamado, Usuario
-    
+    from app.database.database import engine
+    from app.models.chamado import Chamado
+    from app.models.usuario import Usuario
+
     metrics = {
         "timestamp": datetime.now().isoformat(),
         "application": {
             "name": "zeladoria_urbana",
-            "version": "2.0.0",
+            "version": "4.0.0",
             "uptime_seconds": psutil.Process(os.getpid()).create_time()
         },
         "system": {

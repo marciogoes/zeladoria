@@ -2,7 +2,7 @@
 Sprint 6 — Transparência & Governo Aberto
 API pública, orçamento participativo, auditoria
 """
-from typing import Optional, List
+from typing import Optional
 from datetime import datetime
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session

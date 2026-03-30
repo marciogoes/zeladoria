@@ -379,6 +379,7 @@
     <button class="lang-btn active" onclick="switchLang('pt', this)">🇧🇷 PT</button>
     <button class="lang-btn" onclick="switchLang('en', this)">🇺🇸 EN</button>
     <button class="lang-btn" onclick="switchLang('es', this)">🇪🇸 ES</button>
+    <button class="lang-btn" onclick="switchLang('nhe', this)" title="Nheengatu — Língua Geral Amazônica">🌿 NHE</button>
 </div>
 
 <!-- Live stats -->
@@ -650,6 +651,13 @@ const TEXTS = {
         acessar: 'Acceder al sistema',
         dados: 'Ver datos abiertos',
     },
+    nhe: {
+        badge: '🌿 Zelô — Belém Zeladoria COP 30 Pupé',
+        h1: 'Belém Taba Zeladoria<br><span class="accent">Yandé Mão</span> Pupé.',
+        sub: 'Zelô ikuabu yandé taba zeladoria — apuranduka, yepesara, maã rekó puraindé Belém pupé.',
+        acessar: 'Zelô Uikuara',
+        dados: 'Maã Uikuara',
+    },
 };
 
 function switchLang(lang, btn) {
@@ -660,6 +668,15 @@ function switchLang(lang, btn) {
     document.querySelector('.hero h1').innerHTML = t.h1;
     document.getElementById('hero-sub').textContent = t.sub;
     document.documentElement.lang = lang;
+}
+
+// SSO token na URL (vindo do callback)
+const params = new URLSearchParams(window.location.search);
+const ssoToken = params.get('sso_token');
+if (ssoToken) {
+    localStorage.setItem('token', ssoToken);
+    const ssoNome = params.get('sso_nome') || 'Cidadão';
+    window.location.href = '/app';
 }
 
 // ── Live stats da API pública ──

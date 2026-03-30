@@ -1433,6 +1433,23 @@
                     <input type="password" id="login-password" placeholder="••••••••" required>
                 </div>
                 <button type="submit" class="btn-primary">Entrar no Zelô</button>
+
+                <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px;">
+                    <div style="flex:1;height:1px;background:var(--border);"></div>
+                    <span style="font-size:0.75rem;color:var(--text-muted);">ou</span>
+                    <div style="flex:1;height:1px;background:var(--border);"></div>
+                </div>
+
+                <a href="/api/sso/iniciar"
+                   style="display:flex;align-items:center;justify-content:center;gap:10px;
+                          padding:11px 20px;border-radius:var(--radius-sm);
+                          border:1px solid var(--border);background:var(--bg-elevated);
+                          color:var(--text-secondary);text-decoration:none;
+                          font-size:0.875rem;font-weight:500;transition:all .2s;"
+                   onmouseover="this.style.borderColor='var(--border-active)';this.style.color='var(--accent)';"
+                   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)';">
+                    🏛️ Entrar com Portal da Prefeitura de Belém
+                </a>
             </form>
 
             <!-- REGISTER -->
@@ -1893,6 +1910,19 @@
             <button class="btn-close" onclick="closeModal()">✕</button>
         </div>
         <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<!-- Modal Onboarding (Sprint 16) -->
+<div class="modal" id="modal-onboarding" style="z-index:20001;">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <h2>Bem-vindo ao Zelô 🏛️</h2>
+            <button class="btn-close" onclick="fecharOnboarding()">✕</button>
+        </div>
+        <div class="modal-body" id="onboarding-body">
+            <p style="color:var(--text-muted);">Carregando...</p>
+        </div>
     </div>
 </div>
 
@@ -2724,13 +2754,196 @@
         return new Date(d).toLocaleDateString('pt-BR', { day:'2-digit', month:'short', hour:'2-digit', minute:'2-digit' });
     }
 
+    // ═══════════════════════════════════════════════════
+    // ONBOARDING MODAL (Sprint 16)
+    // ═══════════════════════════════════════════════════
+
+    let onboardingPassos = [];
+    let onboardingAtual = 0;
+
+    async function verificarOnboarding() {
+        // Só mostra para cidadãos e apenas 1 vez
+        if (currentUser.tipo !== 'cidadao') return;
+        if (localStorage.getItem('onboarding_concluido')) return;
+
+        try {
+            const r = await apiRequest('/onboarding/passos');
+            if (!r.ok) return;
+            const d = await r.json();
+            onboardingPassos = d.passos || [];
+            if (onboardingPassos.length) {
+                onboardingAtual = 0;
+                renderPassoOnboarding();
+                document.getElementById('modal-onboarding').classList.add('active');
+            }
+        } catch(e) {}
+    }
+
+    function renderPassoOnboarding() {
+        const p = onboardingPassos[onboardingAtual];
+        if (!p) return;
+        const total = onboardingPassos.length;
+        const pct = Math.round((onboardingAtual + 1) / total * 100);
+
+        document.getElementById('onboarding-body').innerHTML = `
+            <div style="text-align:center; padding:8px 0 20px;">
+                <div style="font-size:3rem; margin-bottom:16px;">${p.icone}</div>
+                <h2 style="font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; margin-bottom:10px;">${p.titulo}</h2>
+                <p style="color:var(--text-secondary); font-size:0.9rem; line-height:1.6; max-width:380px; margin:0 auto;">${p.descricao}</p>
+            </div>
+            <div style="background:var(--bg-elevated); border-radius:8px; height:6px; overflow:hidden; margin-bottom:20px;">
+                <div style="height:100%; width:${pct}%; background:var(--accent); border-radius:8px; transition:width .4s ease;"></div>
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; font-size:0.72rem; color:var(--text-muted); margin-bottom:20px;">
+                ${ onboardingPassos.map((_, i) =>
+                    `<div style="width:8px;height:8px;border-radius:50%;background:${
+                        i === onboardingAtual ? 'var(--accent)' : 'var(--border)'};"></div>`
+                ).join('') }
+            </div>
+            <div style="display:flex; gap:10px; justify-content:center; flex-wrap:wrap;">
+                ${ onboardingAtual > 0 ? `<button class="btn-action" onclick="onboardingAnterior()">← Anterior</button>` : '' }
+                ${ onboardingAtual < total - 1
+                    ? `<button class="btn-primary" onclick="onboardingProximo()" style="max-width:160px;">Próximo →</button>`
+                    : `<button class="btn-primary" onclick="concluirOnboarding()" style="max-width:180px;">Começar agora! 🎉</button>`
+                }
+                <button class="btn-action" onclick="fecharOnboarding()" style="color:var(--text-muted);">Pular</button>
+            </div>
+            ${ p.acao ? `
+            <div style="margin-top:14px; text-align:center;">
+                <button class="btn-action accent" onclick="irParaAba('${p.acao.tab}');fecharOnboarding();">
+                    ${p.acao.label} →
+                </button>
+            </div>` : '' }
+        `;
+    }
+
+    function onboardingProximo() {
+        if (onboardingAtual < onboardingPassos.length - 1) {
+            onboardingAtual++;
+            renderPassoOnboarding();
+        }
+    }
+
+    function onboardingAnterior() {
+        if (onboardingAtual > 0) {
+            onboardingAtual--;
+            renderPassoOnboarding();
+        }
+    }
+
+    function concluirOnboarding() {
+        localStorage.setItem('onboarding_concluido', '1');
+        document.getElementById('modal-onboarding').classList.remove('active');
+        showToast('🎉 Bem-vindo ao Zelô!');
+    }
+
+    function fecharOnboarding() {
+        document.getElementById('modal-onboarding').classList.remove('active');
+    }
+
+    function irParaAba(tab) {
+        const btn = document.querySelector(`[data-tab="${tab}"]`);
+        if (btn) btn.click();
+    }
+
+    // ═══════════════════════════════════════════════════
+    // PUSH NOTIFICATIONS (Sprint 15)
+    // ═══════════════════════════════════════════════════
+
+    async function registrarPWAePush() {
+        // Registra Service Worker
+        if ('serviceWorker' in navigator) {
+            try {
+                const reg = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
+                console.log('SW registrado:', reg.scope);
+
+                // Só solicita push para cidadãos após 3s (não interrompe o login)
+                if (currentUser?.tipo === 'cidadao') {
+                    setTimeout(() => solicitarPermissaoPush(reg), 3000);
+                }
+            } catch(e) {
+                console.warn('SW não registrado:', e);
+            }
+        }
+    }
+
+    async function solicitarPermissaoPush(reg) {
+        if (!('PushManager' in window)) return;
+        if (Notification.permission === 'denied') return;
+
+        // Busca VAPID public key do servidor
+        let vapidKey;
+        try {
+            const r = await fetch(API_BASE + '/notificacoes/vapid-public-key');
+            const d = await r.json();
+            if (!d.vapid_public_key) return; // sem VAPID configurado
+            vapidKey = d.vapid_public_key;
+        } catch(e) { return; }
+
+        const permissao = await Notification.requestPermission();
+        if (permissao !== 'granted') return;
+
+        try {
+            const sub = await reg.pushManager.subscribe({
+                userVisibleOnly: true,
+                applicationServerKey: urlBase64ToUint8Array(vapidKey),
+            });
+            const subJson = sub.toJSON();
+            await apiRequest('/notificacoes/subscribe', {
+                method: 'POST',
+                body: JSON.stringify({
+                    endpoint: subJson.endpoint,
+                    keys: subJson.keys,
+                }),
+            });
+            console.log('Push subscription registrada');
+        } catch(e) {
+            console.warn('Push subscription falhou:', e);
+        }
+    }
+
+    function urlBase64ToUint8Array(base64String) {
+        const padding = '='.repeat((4 - base64String.length % 4) % 4);
+        const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+        const rawData = window.atob(base64);
+        return Uint8Array.from([...rawData].map(c => c.charCodeAt(0)));
+    }
+
+    // Ouve mensagens do SW
+    if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.addEventListener('message', event => {
+            if (event.data?.type === 'SYNC_COMPLETE') {
+                showToast('Chamados sincronizados!', 'success');
+                loadChamados();
+            }
+        });
+    }
+
+    // ═══════════════════════════════════════════════════
+    // SSO token na URL (Sprint 13)
+    // ═══════════════════════════════════════════════════
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const ssoToken = params.get('sso_token');
+        if (ssoToken) {
+            localStorage.setItem('token', ssoToken);
+            const ssoNome = params.get('sso_nome') || 'Cidadão';
+            // Limpa URL e recarrega app
+            window.history.replaceState({}, '', '/app');
+            location.reload();
+        }
+    })();
+
     // ─── Init ─────────────────────────────────────────
     window.addEventListener('DOMContentLoaded', () => {
         const token = getToken();
         const userStr = localStorage.getItem('user');
         if (token && userStr) {
             currentUser = JSON.parse(userStr);
-            loadMainApp();
+            loadMainApp().then(() => {
+                registrarPWAePush();
+                verificarOnboarding();
+            });
         }
     });
 </script>
