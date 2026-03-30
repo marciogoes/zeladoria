@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 import os, logging
 
 from app.database.database import engine, Base, SessionLocal
+from app.models.historico import ChamadoHistorico  # Sprint 17 — garante criação da tabela
 from app.routes import auth, chamados, categorias, bairros, usuarios, relatorios, secretarias, comentarios
 # inovacoes.py descontinuado — migrado para geo_router.py e ia_router.py (sprints 9-12)
 from app.routers.servicos_router import router as servicos_router
@@ -110,7 +111,7 @@ app.include_router(chamados.router, prefix="/api/chamados", tags=["Chamados"])
 app.include_router(comentarios.router, tags=["Comentários"])
 app.include_router(categorias.router, prefix="/api/categorias", tags=["Categorias"])
 app.include_router(bairros.router, prefix="/api/bairros", tags=["Bairros"])
-app.include_router(usuarios.router, prefix="/api/usuarios", tags=["Usuários"])
+app.include_router(usuarios.router, prefix="/api/usuarios", tags=["Usuários"])  # Sprint 18: gestão completa
 app.include_router(relatorios.router, prefix="/api/relatorios", tags=["Relatórios"])
 app.include_router(secretarias.router, tags=["Secretarias"])
 app.include_router(servicos_router, tags=["Catálogo de Serviços"])
