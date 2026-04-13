@@ -1,0 +1,26 @@
+{
+  "name": "Zelô — Zeladoria Urbana de Belém",
+  "short_name": "Zelô",
+  "description": "Plataforma de gestão de zeladoria urbana da Prefeitura de Belém/PA",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0099aa",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["government", "utilities"],
+  "lang": "pt-BR"
+}
