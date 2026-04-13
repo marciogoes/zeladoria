@@ -2350,10 +2350,7 @@
                         <div style="flex:1;">
                             <div style="font-weight:600;margin-bottom:4px;">${p.titulo}</div>
                             <div style="font-size:0.8rem;color:var(--text-muted);">${
-                                [p.categoria, p.bairro, p.custo_estimado ? 'R
-
-
-+Number(p.custo_estimado).toLocaleString('pt-BR') : null]
+                                [p.categoria, p.bairro, p.custo_estimado ? 'R$ '+Number(p.custo_estimado).toLocaleString('pt-BR') : null]
                                 .filter(Boolean).join(' • ')
                             }</div>
                         </div>
