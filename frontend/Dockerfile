@@ -1,37 +1,19 @@
 # ============================================
-# DOCKERFILE - FRONTEND REACT
+# DOCKERFILE - FRONTEND ESTÁTICO (HTML/JS/CSS)
 # Sistema de Zeladoria Urbana - Belém/PA
 # ============================================
 
-# ESTÁGIO 1: Build do React
-FROM node:20-alpine AS builder
-
-WORKDIR /app
-
-# Copiar dependências primeiro (cache de layer)
-COPY frontend/package.json frontend/package-lock.json ./
-RUN npm ci --silent
-
-# Copiar código fonte
-COPY frontend/ .
-
-# Build de produção (variável injetada em build time)
-ARG VITE_API_URL
-ENV VITE_API_URL=$VITE_API_URL
-
-RUN npm run build
-
-# ESTÁGIO 2: Servir com Nginx
 FROM nginx:alpine
 
-# Instalar gettext para envsubst
+# Instalar gettext para envsubst (substituição de $PORT)
 RUN apk add --no-cache gettext
 
-# Copiar arquivos buildados
-COPY --from=builder /app/dist /usr/share/nginx/html
+# Copiar arquivo HTML principal e manifest
+COPY index.html /usr/share/nginx/html/index.html
+COPY manifest.json /usr/share/nginx/html/manifest.json
 
 # Copiar config do nginx como template
-COPY frontend/nginx.conf /etc/nginx/conf.d/default.conf.template
+COPY nginx.conf /etc/nginx/conf.d/default.conf.template
 
-# Script de inicialização que substitui $PORT e inicia o nginx
+# Script de inicialização
 CMD ["/bin/sh", "-c", "envsubst '$PORT' < /etc/nginx/conf.d/default.conf.template > /etc/nginx/conf.d/default.conf && nginx -g 'daemon off;'"]
