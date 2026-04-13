@@ -1,1 +1,3034 @@
-PLACEHOLDER - will be replaced
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zelô — Zeladoria Urbana de Belém</title>
+    <meta name="theme-color" content="#0099aa">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Zelô">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        :root {
+            --bg-void: #f0f4f8;
+            --bg-deep: #ffffff;
+            --bg-surface: #ffffff;
+            --bg-elevated: #f5f7fa;
+            --bg-card: #eef2f7;
+            --accent: #0099aa;
+            --accent-dim: rgba(0, 153, 170, 0.10);
+            --accent-glow: rgba(0, 153, 170, 0.15);
+            --accent2: #2563eb;
+            --accent2-dim: rgba(37, 99, 235, 0.10);
+            --warn: #d97706;
+            --danger: #dc2626;
+            --success: #059669;
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --text-muted: #94a3b8;
+            --border: rgba(0,0,0,0.08);
+            --border-active: rgba(0, 153, 170, 0.35);
+            --radius: 14px;
+            --radius-sm: 8px;
+            --shadow: 0 4px 24px rgba(0,0,0,0.08);
+            --shadow-glow: 0 0 40px rgba(0, 153, 170, 0.06);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg-void);
+            color: var(--text-primary);
+            line-height: 1.6;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* ═══════════════════════════════════════
+           LOADING OVERLAY
+        ═══════════════════════════════════════ */
+        .loading {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(6,9,16,0.85);
+            backdrop-filter: blur(4px);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .loading.active { display: flex; }
+        .loader-ring {
+            width: 48px;
+            height: 48px;
+            border: 3px solid rgba(0, 212, 170, 0.15);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.7s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══════════════════════════════════════
+           TOAST
+        ═══════════════════════════════════════ */
+        .toast {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            padding: 14px 20px;
+            border-radius: var(--radius-sm);
+            z-index: 10000;
+            display: none;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            min-width: 280px;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(20px);
+        }
+        .toast.active { display: flex; animation: slideUp 0.3s ease; }
+        .toast.success { border-left: 3px solid var(--accent); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.warning { border-left: 3px solid var(--warn); }
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* ═══════════════════════════════════════
+           LOGIN PAGE
+        ═══════════════════════════════════════ */
+        #login-page {
+            min-height: 100vh;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Animated mesh background */
+        #login-page::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse 80% 60% at 20% 50%, rgba(0,153,170,0.05) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 80% at 80% 20%, rgba(37,99,235,0.05) 0%, transparent 70%),
+                radial-gradient(ellipse 50% 50% at 60% 80%, rgba(0,153,170,0.03) 0%, transparent 70%);
+            pointer-events: none;
+        }
+
+        .login-left {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding: 60px;
+            background: linear-gradient(135deg, #0f172a 0%, #1e3a5f 100%);
+            border-right: 1px solid var(--border);
+            overflow: hidden;
+        }
+
+        .login-left .brand-name,
+        .login-left .login-hero h1,
+        .login-left .login-hero p,
+        .login-left .stat-pill strong,
+        .login-left .stat-pill span {
+            color: #f0f4ff !important;
+        }
+
+        .login-left .stat-pill strong { color: #5eead4 !important; }
+        .login-left .login-hero p { color: #94a3b8 !important; }
+        .login-left .stat-pill span { color: #64748b !important; }
+        .login-left .highlight { color: #5eead4 !important; }
+
+        .login-left::after {
+            content: '';
+            position: absolute;
+            bottom: -100px;
+            left: -100px;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0,212,170,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 60px;
+        }
+
+        .brand-icon {
+            width: 48px;
+            height: 48px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            box-shadow: 0 4px 20px rgba(0,212,170,0.3);
+        }
+
+        .brand-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.8rem;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            color: var(--text-primary);
+        }
+
+        .brand-name span { color: var(--accent); }
+
+        .login-hero h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: clamp(2.2rem, 4vw, 3.2rem);
+            font-weight: 800;
+            line-height: 1.1;
+            letter-spacing: -0.03em;
+            margin-bottom: 20px;
+        }
+
+        .login-hero h1 .highlight {
+            color: var(--accent);
+            position: relative;
+        }
+
+        .login-hero p {
+            font-size: 1.05rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+            max-width: 380px;
+            margin-bottom: 40px;
+        }
+
+        .stats-row {
+            display: flex;
+            gap: 28px;
+        }
+
+        .stat-pill {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .stat-pill strong {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        .stat-pill span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        /* Grid decoration */
+        .login-grid {
+            position: absolute;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+            background-size: 40px 40px;
+            mask-image: radial-gradient(ellipse 80% 80% at 50% 50%, black 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        .login-right {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px;
+            position: relative;
+        }
+
+        .login-card {
+            width: 100%;
+            max-width: 400px;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: var(--shadow), var(--shadow-glow);
+        }
+
+        .login-card h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .login-card p.subtitle {
+            font-size: 0.88rem;
+            color: var(--text-secondary);
+            margin-bottom: 28px;
+        }
+
+        /* Tab switcher */
+        .tab-switcher {
+            display: flex;
+            background: var(--bg-deep);
+            border-radius: var(--radius-sm);
+            padding: 4px;
+            margin-bottom: 28px;
+            gap: 4px;
+        }
+
+        .tab-switcher button {
+            flex: 1;
+            padding: 9px;
+            border: none;
+            background: transparent;
+            color: var(--text-secondary);
+            border-radius: 6px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .tab-switcher button.active {
+            background: var(--bg-elevated);
+            color: var(--text-primary);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        /* Form inputs */
+        .field {
+            margin-bottom: 16px;
+        }
+
+        .field label {
+            display: block;
+            font-size: 0.8rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            margin-bottom: 7px;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .field input,
+        .field select,
+        .field textarea {
+            width: 100%;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 11px 14px;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem;
+            transition: border-color 0.2s, box-shadow 0.2s;
+            outline: none;
+        }
+
+        .field input:focus,
+        .field select:focus,
+        .field textarea:focus {
+            border-color: var(--border-active);
+            box-shadow: 0 0 0 3px var(--accent-dim);
+        }
+
+        .field textarea {
+            resize: vertical;
+            min-height: 90px;
+        }
+
+        .field select option { background: var(--bg-surface); }
+
+        /* Buttons */
+        .btn-primary {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent);
+            color: #ffffff;
+            border: none;
+            border-radius: var(--radius-sm);
+            font-family: 'Syne', sans-serif;
+            font-size: 0.95rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            letter-spacing: 0.02em;
+        }
+
+        .btn-primary:hover {
+            background: #00bfa0;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 20px rgba(0,212,170,0.3);
+        }
+
+        .btn-secondary {
+            padding: 9px 16px;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            color: var(--text-primary);
+            border-color: var(--border-active);
+        }
+
+        .btn-ghost {
+            padding: 9px 16px;
+            background: transparent;
+            color: var(--text-secondary);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-ghost:hover {
+            color: var(--text-primary);
+            border-color: rgba(255,255,255,0.15);
+        }
+
+        /* Quick login buttons */
+        .quick-logins {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .quick-logins p {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            margin-bottom: 10px;
+        }
+
+        .quick-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 7px;
+        }
+
+        .quick-btn {
+            padding: 8px 10px;
+            background: var(--bg-deep);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            color: var(--text-secondary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            text-align: left;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
+
+        .quick-btn:hover {
+            border-color: var(--border-active);
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        .quick-btn .role {
+            font-size: 0.7rem;
+            color: var(--accent);
+            display: block;
+        }
+
+        /* ═══════════════════════════════════════
+           MAIN APP LAYOUT
+        ═══════════════════════════════════════ */
+        #main-app {
+            display: none;
+            min-height: 100vh;
+        }
+
+        #main-app.visible { display: flex; }
+
+        /* Sidebar */
+        .sidebar {
+            width: 240px;
+            min-height: 100vh;
+            background: var(--bg-deep);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            z-index: 100;
+            overflow-y: auto;
+        }
+
+        .sidebar-brand {
+            padding: 24px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar-brand .brand-icon {
+            width: 38px;
+            height: 38px;
+            font-size: 1.1rem;
+        }
+
+        .sidebar-brand .brand-name {
+            font-size: 1.4rem;
+        }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--accent), var(--accent2));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: #060910;
+            flex-shrink: 0;
+        }
+
+        .user-meta {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-meta .name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 130px;
+        }
+
+        .user-meta .role-badge {
+            font-size: 0.65rem;
+            background: var(--accent-dim);
+            color: var(--accent);
+            padding: 2px 7px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 16px 12px;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .nav-section {
+            font-size: 0.68rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            padding: 10px 8px 6px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: 1px solid transparent;
+            background: none;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-item:hover {
+            color: var(--text-primary);
+            background: var(--bg-elevated);
+        }
+
+        .nav-item.active {
+            color: var(--accent);
+            background: var(--accent-dim);
+            border-color: var(--border-active);
+        }
+
+        .nav-item .icon {
+            font-size: 1rem;
+            width: 20px;
+            text-align: center;
+            flex-shrink: 0;
+        }
+
+        .nav-item .badge {
+            margin-left: auto;
+            background: var(--accent);
+            color: #060910;
+            font-size: 0.65rem;
+            font-weight: 700;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+        }
+
+        .sidebar-footer {
+            padding: 16px 12px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-logout {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 12px;
+            border-radius: 10px;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+        }
+
+        .btn-logout:hover {
+            color: var(--danger);
+            background: rgba(239,68,68,0.08);
+        }
+
+        /* Main content area */
+        .main-content {
+            margin-left: 240px;
+            flex: 1;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Top bar */
+        .topbar {
+            height: 64px;
+            background: var(--bg-deep);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 28px;
+            gap: 16px;
+            position: sticky;
+            top: 0;
+            z-index: 50;
+        }
+
+        .topbar-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .topbar-search {
+            flex: 1;
+            max-width: 360px;
+            position: relative;
+        }
+
+        .topbar-search input {
+            width: 100%;
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 9px 14px 9px 36px;
+            border-radius: 10px;
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .topbar-search input:focus {
+            border-color: var(--border-active);
+        }
+
+        .topbar-search .search-icon {
+            position: absolute;
+            left: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-muted);
+            font-size: 0.85rem;
+        }
+
+        /* Page content */
+        .page {
+            display: none;
+            padding: 28px;
+            flex: 1;
+        }
+
+        .page.active { display: block; }
+
+        .page-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 24px;
+        }
+
+        .page-header h1 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .page-header p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-top: 2px;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            border-color: rgba(255,255,255,0.12);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+
+        .card-clickable {
+            cursor: pointer;
+        }
+
+        .card-clickable:hover {
+            border-color: var(--border-active);
+        }
+
+        /* Stats row */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+
+        .stat-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+        }
+
+        .stat-card.teal::before { background: var(--accent); }
+        .stat-card.blue::before { background: var(--accent2); }
+        .stat-card.warn::before { background: var(--warn); }
+        .stat-card.success::before { background: var(--success); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .stat-value {
+            font-family: 'Syne', sans-serif;
+            font-size: 2.2rem;
+            font-weight: 800;
+            line-height: 1;
+        }
+
+        .stat-card.teal .stat-value { color: var(--accent); }
+        .stat-card.blue .stat-value { color: var(--accent2); }
+        .stat-card.warn .stat-value { color: var(--warn); }
+        .stat-card.success .stat-value { color: var(--success); }
+
+        /* Chamado cards */
+        .chamados-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+            gap: 14px;
+        }
+
+        .chamado-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 18px;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .chamado-card::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            width: 3px;
+        }
+
+        .chamado-card.aberto::before { background: var(--accent2); }
+        .chamado-card.em_andamento::before { background: var(--warn); }
+        .chamado-card.resolvido::before { background: var(--success); }
+        .chamado-card.cancelado::before { background: var(--danger); }
+
+        .chamado-card:hover {
+            border-color: rgba(255,255,255,0.15);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+
+        .chamado-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 12px;
+            margin-bottom: 10px;
+        }
+
+        .chamado-protocolo {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.68rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+        }
+
+        .chamado-title {
+            font-size: 0.92rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-top: 3px;
+            line-height: 1.4;
+        }
+
+        .chamado-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+        }
+
+        .meta-tag {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        /* Badges */
+        .badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .badge.aberto { background: rgba(59,127,255,0.15); color: #7eb3ff; }
+        .badge.em_andamento { background: rgba(245,158,11,0.15); color: #fbbf24; }
+        .badge.resolvido { background: rgba(16,185,129,0.15); color: #34d399; }
+        .badge.cancelado { background: rgba(239,68,68,0.15); color: #f87171; }
+        .badge.baixa { background: rgba(59,127,255,0.12); color: #7eb3ff; }
+        .badge.media { background: rgba(245,158,11,0.12); color: #fbbf24; }
+        .badge.alta { background: rgba(239,68,68,0.12); color: #f87171; }
+        .badge.critica { background: rgba(239,68,68,0.2); color: #ff6b6b; border: 1px solid rgba(239,68,68,0.3); }
+
+        /* Filters bar */
+        .filters-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .filters-bar select,
+        .filters-bar input {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .filters-bar select:focus,
+        .filters-bar input:focus {
+            border-color: var(--border-active);
+        }
+
+        .filters-bar input { flex: 1; min-width: 200px; }
+
+        /* Form section */
+        .form-section {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 28px;
+            max-width: 680px;
+        }
+
+        .form-section h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            padding-bottom: 14px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+
+        .form-section .field { margin-bottom: 14px; }
+
+        /* Map */
+        #map {
+            height: 280px;
+            width: 100%;
+            border-radius: var(--radius-sm);
+            border: 1px solid var(--border);
+            margin-bottom: 6px;
+        }
+
+        .map-hint {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-bottom: 14px;
+        }
+
+        /* Dashboard charts */
+        .chart-card {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 22px;
+        }
+
+        .chart-card h3 {
+            font-family: 'Syne', sans-serif;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 18px;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+
+        .chart-item { margin-bottom: 14px; }
+
+        .chart-item-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.83rem;
+            color: var(--text-secondary);
+            margin-bottom: 6px;
+        }
+
+        .chart-item-label strong { color: var(--text-primary); }
+
+        .chart-bar-bg {
+            height: 6px;
+            background: var(--bg-elevated);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .chart-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent2));
+            border-radius: 3px;
+            transition: width 0.8s ease;
+        }
+
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-top: 16px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(6,9,16,0.8);
+            backdrop-filter: blur(6px);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal.active { display: flex; }
+
+        .modal-box {
+            background: var(--bg-surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            max-width: 680px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            animation: modalIn 0.25s ease;
+        }
+
+        @keyframes modalIn {
+            from { opacity: 0; transform: scale(0.96) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        .modal-header {
+            padding: 22px 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            background: var(--bg-surface);
+            z-index: 1;
+            border-radius: 20px 20px 0 0;
+        }
+
+        .modal-header h2 {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 700;
+        }
+
+        .btn-close {
+            width: 32px;
+            height: 32px;
+            background: var(--bg-elevated);
+            border: none;
+            border-radius: 8px;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.15s;
+        }
+
+        .btn-close:hover { color: var(--text-primary); background: var(--bg-card); }
+
+        .modal-body { padding: 24px; }
+
+        /* Detail rows */
+        .detail-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .detail-item label {
+            font-size: 0.72rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            font-weight: 600;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .detail-item p {
+            font-size: 0.88rem;
+            color: var(--text-primary);
+        }
+
+        /* Action buttons row */
+        .action-row {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 1px solid var(--border);
+        }
+
+        .btn-action {
+            padding: 9px 16px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.15s;
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+        }
+
+        .btn-action:hover { color: var(--text-primary); border-color: rgba(255,255,255,0.15); }
+        .btn-action.success { color: var(--success); border-color: rgba(16,185,129,0.3); background: rgba(16,185,129,0.08); }
+        .btn-action.info { color: var(--accent2); border-color: rgba(59,127,255,0.3); background: rgba(59,127,255,0.08); }
+        .btn-action.accent { color: var(--accent); border-color: var(--border-active); background: var(--accent-dim); }
+
+        /* Rating stars */
+        .rating-stars {
+            display: flex;
+            gap: 6px;
+            margin: 12px 0;
+        }
+
+        .star {
+            font-size: 1.6rem;
+            cursor: pointer;
+            opacity: 0.3;
+            transition: opacity 0.15s, transform 0.15s;
+        }
+
+        .star.filled { opacity: 1; }
+        .star:hover { transform: scale(1.2); }
+
+        /* Comentarios */
+        .comment-box {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 14px;
+            margin-bottom: 10px;
+        }
+
+        .comment-box .comment-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        .comment-box .comment-author {
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .comment-box .comment-date {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-left: auto;
+        }
+
+        .comment-box .comment-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        /* Geolocation button */
+        .geo-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            background: var(--bg-elevated);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+
+        .geo-btn:hover {
+            border-color: var(--border-active);
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .geo-status {
+            display: none;
+            font-size: 0.8rem;
+            padding: 8px 12px;
+            border-radius: var(--radius-sm);
+            margin-bottom: 10px;
+        }
+
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-muted);
+        }
+
+        .empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+        .empty-state p { font-size: 0.9rem; }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
+
+        /* Responsive */
+        @media (max-width: 900px) {
+            #login-page { grid-template-columns: 1fr; }
+            .login-left { display: none; }
+            .sidebar { width: 200px; }
+            .main-content { margin-left: 200px; }
+        }
+
+        @media (max-width: 640px) {
+            .sidebar { transform: translateX(-100%); }
+            .main-content { margin-left: 0; }
+            .form-row { grid-template-columns: 1fr; }
+            .charts-grid { grid-template-columns: 1fr; }
+        }
+
+        .hidden { display: none !important; }
+        .stat-card.danger::before { background: var(--danger); }
+        .stat-card.danger .stat-value { color: var(--danger); }
+
+        /* ═══ MOBILE HAMBURGER ═══ */
+        .hamburger {
+            display: none;
+            flex-direction: column;
+            gap: 5px;
+            cursor: pointer;
+            padding: 8px;
+            border: none;
+            background: transparent;
+        }
+        .hamburger span {
+            width: 22px; height: 2px;
+            background: var(--text-secondary);
+            border-radius: 2px;
+            display: block;
+            transition: all 0.2s;
+        }
+        @media (max-width: 640px) {
+            .hamburger { display: flex; }
+            .sidebar { transition: transform 0.25s ease; }
+            .sidebar.open { transform: translateX(0) !important; }
+            .sidebar-overlay {
+                display: none; position: fixed; inset: 0;
+                background: rgba(0,0,0,0.4); z-index: 99;
+            }
+            .sidebar-overlay.active { display: block; }
+        }
+
+        /* ═══ SPRINT 3: VOTAÇÃO ═══ */
+        .voto-btn {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            background: var(--bg-elevated);
+            color: var(--text-secondary);
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+        .voto-btn:hover { border-color: var(--border-active); color: var(--accent); }
+        .voto-btn.votou { background: var(--accent-dim); border-color: var(--border-active); color: var(--accent); }
+        .voto-count { font-family: 'Syne', sans-serif; font-weight: 700; }
+
+        /* ═══ SPRINT 4: GAMIFICAÇÃO ═══ */
+        .nivel-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 20px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            background: var(--accent-dim);
+            color: var(--accent);
+            border: 1px solid var(--border-active);
+        }
+        .conquista-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+            gap: 8px;
+            margin-top: 12px;
+        }
+        .conquista-card {
+            background: var(--bg-elevated);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            padding: 10px;
+            text-align: center;
+        }
+        .conquista-card .icon { font-size: 1.4rem; margin-bottom: 4px; }
+        .conquista-card .name { font-size: 0.72rem; color: var(--text-secondary); }
+        .pts-toast {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 18px;
+            border-radius: var(--radius-sm);
+            font-size: 0.9rem;
+            font-weight: 600;
+            z-index: 20000;
+            display: none;
+            animation: slideDown 0.3s ease;
+        }
+        @keyframes slideDown { from { opacity:0; transform:translateY(-20px); } to { opacity:1; transform:translateY(0); } }
+
+        /* ═══ SPRINT 4: VOZ ═══ */
+        .voice-btn {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 11px 14px;
+            background: var(--bg-elevated);
+            border: 1px dashed var(--border);
+            border-radius: var(--radius-sm);
+            color: var(--text-secondary);
+            font-family: 'DM Sans', sans-serif;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-bottom: 10px;
+        }
+        .voice-btn:hover { border-color: rgba(220,38,38,0.4); color: #dc2626; }
+        .voice-btn.recording { border-color: #dc2626; color: #dc2626; background: rgba(220,38,38,0.06); animation: pulse 1s infinite; }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.7} }
+
+        /* ═══ NAV GAMIFICAÇÃO ═══ */
+        .pts-sidebar {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .pts-sidebar .pts-num {
+            font-family: 'Syne', sans-serif;
+            font-size: 1.1rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+        .pts-sidebar .pts-lbl {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+        }
+    </style>
+</head>
+<body>
+
+<!-- LOADING -->
+<div class="loading" id="loading">
+    <div class="loader-ring"></div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+    <span id="toast-message"></span>
+</div>
+
+<!-- ═══════════════════════════════════════ LOGIN ═══ -->
+<div id="login-page">
+    <div class="login-grid"></div>
+
+    <div class="login-left">
+        <div class="brand">
+            <div class="brand-icon">U0001f3db️</div>
+            <div class="brand-name">Zel<span>ô</span></div>
+        </div>
+
+        <div class="login-hero">
+            <h1>Gestão urbana<br>para <span class="highlight">Belém</span>.</h1>
+            <p>Plataforma integrada de zeladoria urbana para cidadãos, secretarias e gestores municipais.</p>
+            <div class="stats-row">
+                <div class="stat-pill">
+                    <strong>15+</strong>
+                    <span>Secretarias</span>
+                </div>
+                <div class="stat-pill">
+                    <strong>60+</strong>
+                    <span>Bairros</span>
+                </div>
+                <div class="stat-pill">
+                    <strong>24h</strong>
+                    <span>SLA Médio</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="login-right">
+        <div class="login-card">
+            <h2>Bem-vindo</h2>
+            <p class="subtitle">Entre na sua conta para continuar</p>
+
+            <div class="tab-switcher">
+                <button class="active" data-tab="login">Entrar</button>
+                <button data-tab="register">Cadastrar</button>
+            </div>
+
+            <!-- LOGIN -->
+            <form id="login-form">
+                <div class="field">
+                    <label>E-mail</label>
+                    <input type="email" id="login-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="field">
+                    <label>Senha</label>
+                    <input type="password" id="login-password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="btn-primary">Entrar no Zelô</button>
+
+                <div style="display:flex;align-items:center;gap:10px;margin:16px 0 4px;">
+                    <div style="flex:1;height:1px;background:var(--border);"></div>
+                    <span style="font-size:0.75rem;color:var(--text-muted);">ou</span>
+                    <div style="flex:1;height:1px;background:var(--border);"></div>
+                </div>
+
+                <a href="/api/sso/iniciar"
+                   style="display:flex;align-items:center;justify-content:center;gap:10px;
+                          padding:11px 20px;border-radius:var(--radius-sm);
+                          border:1px solid var(--border);background:var(--bg-elevated);
+                          color:var(--text-secondary);text-decoration:none;
+                          font-size:0.875rem;font-weight:500;transition:all .2s;"
+                   onmouseover="this.style.borderColor='var(--border-active)';this.style.color='var(--accent)';"
+                   onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--text-secondary)';">
+                    ¯U0001f3db️ Entrar com Portal da Prefeitura de Belém
+                </a>
+            </form>
+
+            <!-- REGISTER -->
+            <form id="register-form" class="hidden">
+                <div class="field">
+                    <label>Nome completo</label>
+                    <input type="text" id="register-nome" placeholder="João da Silva" required>
+                </div>
+                <div class="field">
+                    <label>E-mail</label>
+                    <input type="email" id="register-email" placeholder="seu@email.com" required>
+                </div>
+                <div class="field">
+                    <label>Telefone</label>
+                    <input type="tel" id="register-telefone" placeholder="(91) 9xxxx-xxxx" required>
+                </div>
+                <div class="field">
+                    <label>Senha</label>
+                    <input type="password" id="register-password" placeholder="Mínimo 6 caracteres" required>
+                </div>
+                <button type="submit" class="btn-primary">Criar conta</button>
+            </form>
+
+            <div class="quick-logins">
+                <p>Acesso rápido — demo</p>
+                <div class="quick-grid">
+                    <button class="quick-btn" onclick="loginDemo('cidadao@zeladoria.com','cidadao123')">
+                        👤 <div><span>Cidadão</span><span class="role">cidadao@zeladoria.com</span></div>
+                    </button>
+                    <button class="quick-btn" onclick="loginDemo('equipe@zeladoria.com','equipe123')">
+                        👷 <div><span>Equipe</span><span class="role">equipe@zeladoria.com</span></div>
+                    </button>
+                    <button class="quick-btn" onclick="loginDemo('seurb@zeladoria.com','seurb123')">
+                        🏛️ <div><span>SEURB</span><span class="role">seurb@zeladoria.com</span></div>
+                    </button>
+                    <button class="quick-btn" onclick="loginDemo('gestor@zeladoria.com','gestor123')">
+                        📊 <div><span>Gestor</span><span class="role">gestor@zeladoria.com</span></div>
+                    </button>
+                    <button class="quick-btn" onclick="loginDemo('admin@zeladoria.com','admin123')" style="grid-column: span 2;">
+                        🔧 <div><span>Administrador</span><span class="role">admin@zeladoria.com</span></div>
+                    </button>
+                </div>
+            </div></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ MAIN APP ═══ -->
+<div id="main-app">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="brand-icon">🏛️</div>
+            <div class="brand-name">Zel<span style="color:var(--accent)">ô</span></div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="user-meta">
+                <div class="user-avatar" id="user-avatar">?</div>
+                <div>
+                    <div class="name" id="user-name-sidebar">—</div>
+                    <span class="role-badge" id="user-role-badge">—</span>
+                </div>
+            </div>
+        </div>
+        <div class="pts-sidebar" id="pts-sidebar" style="display:none">
+            <div>
+                <div class="pts-num" id="sidebar-pts">0</div>
+                <div class="pts-lbl">pontos Zelô</div>
+            </div>
+            <div class="nivel-badge" id="sidebar-nivel">iniciante</div>
+        </div>
+
+        <nav class="sidebar-nav" id="sidebar-nav">
+            <!-- Gerado dinamicamente por setupNavPorPerfil() -->
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="btn-logout" onclick="logout()">
+                <span>↩</span> Sair
+            </button>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <div class="main-content">
+        <div class="topbar">
+            <button class="hamburger" onclick="toggleSidebar()" aria-label="Menu"><span></span><span></span><span></span></button>
+            <div class="topbar-title" id="topbar-title">Chamados</div>
+            <div class="topbar-search">
+                <span class="search-icon">🔍</span>
+                <input type="text" id="filter-search" placeholder="Buscar por protocolo ou título...">
+            </div>
+        </div>
+
+        <!-- CHAMADOS -->
+        <div class="page active" id="page-chamados">
+            <div class="page-header">
+                <div>
+                    <h1 id="chamados-title">Chamados</h1>
+                    <p id="chamados-subtitle">Gerencie os chamados da sua área</p>
+                </div>
+            </div>
+
+            <div class="filters-bar">
+                <select id="filter-status">
+                    <option value="">Todos os status</option>
+                    <option value="aberto">Aberto</option>
+                    <option value="em_andamento">Em Andamento</option>
+                    <option value="resolvido">Resolvido</option>
+                    <option value="cancelado">Cancelado</option>
+                </select>
+                <select id="filter-prioridade">
+                    <option value="">Todas as prioridades</option>
+                    <option value="baixa">Baixa</option>
+                    <option value="media">Média</option>
+                    <option value="alta">Alta</option>
+                    <option value="critica">Crítica</option>
+                </select>
+            </div>
+
+            <div class="chamados-grid" id="chamados-list">
+                <div class="empty-state" style="grid-column:1/-1">
+                    <div class="empty-icon">📋</div>
+                    <p>Carregando chamados...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- NOVO CHAMADO -->
+        <div class="page" id="page-novo-chamado">
+            <div class="page-header">
+                <div>
+                    <h1>Novo Chamado</h1>
+                    <p>Registre um novo problema ou solicitação</p>
+                </div>
+            </div>
+
+            <form id="novo-chamado-form" class="form-section">
+                <h3>📝 Informações do Chamado</h3>
+
+                <div class="field">
+                    <label>Título</label>
+                    <input type="text" id="titulo" placeholder="Ex: Buraco na calçada" required>
+                </div>
+
+                <div class="field">
+                    <label>Descrição detalhada</label>
+                    <button type="button" class="voice-btn" id="voice-btn" onclick="toggleVoz()">
+                        🙙️ <span id="voice-label">Ditar descrição por voz</span>
+                    </button>
+                    <textarea id="descricao" placeholder="Descreva o problema com detalhes ou use o botão de voz acima..." required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label>Categoria</label>
+                        <select id="categoria" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label>Bairro</label>
+                        <select id="bairro" required>
+                            <option value="">Selecione...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>📍 Localização</label>
+                    <button type="button" class="geo-btn" id="btnGeolocation">
+                        📡 Usar minha localização atual
+                    </button>
+                    <div class="geo-status" id="geo-status"></div>
+                    <div class="map-hint">Ou clique no mapa para marcar o local</div>
+                    <div id="map"></div>
+                </div>
+
+                <div class="form-row">
+                    <div class="field">
+                        <label>Latitude</label>
+                        <input type="text" id="latitude" readonly placeholder="Gerado pelo mapa">
+                    </div>
+                    <div class="field">
+                        <label>Longitude</label>
+                        <input type="text" id="longitude" readonly placeholder="Gerado pelo mapa">
+                    </div>
+                </div>
+
+                <div class="field">
+                    <label>Endereço</label>
+                    <input type="text" id="endereco" placeholder="Será preenchido automaticamente">
+                </div>
+
+                <div class="field">
+                    <label>Foto (opcional)</label>
+                    <input type="file" id="foto" accept="image/*" style="color: var(--text-secondary)">
+                </div>
+
+                <div style="margin-top: 8px;">
+                    <button type="submit" class="btn-primary" style="max-width: 240px;">Enviar Chamado →</button>
+                </div>
+            </form>
+        </div>
+
+        <!-- CATÁLOGO -->
+        <div class="page" id="page-catalogo">
+            <div class="page-header">
+                <div>
+                    <h1>Catálogo de Serviços</h1>
+                    <p>Todos os serviços oferecidos pelas secretarias de Belém</p>
+                </div>
+            </div>
+            <div style="text-align:center; padding: 60px 20px;">
+                <div style="font-size: 3rem; margin-bottom: 16px;">📚</div>
+                <p style="color: var(--text-secondary); margin-bottom: 24px;">Acesse o catálogo completo de serviços municipais</p>
+                <a href="/static/catalogo.html" target="_blank" class="btn-primary" style="display:inline-block; text-decoration:none; max-width:240px;">
+                    Abrir Catálogo →
+                </a>
+            </div>
+        </div>
+
+        <!-- MAPA DE CALOR -->
+        <div class="page" id="page-mapa">
+            <div class="page-header"><div><h1>Mapa de Calor</h1><p>Concentração de ocorrências em Belém</p></div></div>
+            <div class="card" style="margin-bottom:16px;">
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <select id="mapa-status" onchange="carregarMapa()" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                        <option value="">Todos os status</option>
+                        <option value="aberto">Abertos</option>
+                        <option value="em_andamento">Em andamento</option>
+                        <option value="resolvido">Resolvidos</option>
+                    </select>
+                    <select id="mapa-dias" onchange="carregarMapa()" style="background:var(--bg-elevated);border:1px solid var(--border);color:var(--text-primary);padding:8px 12px;border-radius:8px;">
+                        <option value="7">7 dias</option>
+                        <option value="30" selected>30 dias</option>
+                        <option value="90">90 dias</option>
+                        <option value="365">1 ano</option>
+                    </select>
+                    <span id="mapa-total" style="font-size:0.85rem;color:var(--text-secondary);padding:8px 0;"></span>
+                </div>
+            </div>
+            <div id="mapa-calor" style="height:500px;border-radius:12px;border:1px solid var(--border);"></div>
+        </div>
+        <!-- CLUSTERS -->
+        <div class="page" id="page-clusters">
+            <div class="page-header"><div><h1>Agrupamentos Inteligentes</h1><p>Chamados próximos que podem ser atendidos juntos</p></div></div>
+            <div id="clusters-lista" style="display:flex;flex-direction:column;gap:14px;">
+                <div class="empty-state"><div class="empty-icon">🔍</div><p>Carregando agrupamentos...</p></div>
+            </div>
+        </div>
+
+        <!-- RANKING -->
+        <div class="page" id="page-ranking">
+            <div class="page-header"><div><h1>Ranking</h1><p>Os mais engajados na zeladoria de Belém</p></div></div>
+            <div id="meu-perfil-gamer" style="margin-bottom:20px;"></div>
+            <div id="ranking-lista" style="display:flex;flex-direction:column;gap:8px;">
+                <div class="empty-state"><div class="empty-icon">🏆</div><p>Carregando ranking...</p></div>
+            </div>
+        </div>
+
+        <!-- PERFIL (Cidadão) -->
+        <div class="page" id="page-perfil">
+            <div class="page-header"><div><h1>Meu Perfil</h1><p>Suas conquistas e atividades no Zelô</p></div></div>
+            <div id="perfil-gami-card" style="margin-bottom:16px;"></div>
+            <div class="conquista-grid" id="perfil-conquistas"></div>
+        </div>
+<div class="page" id="page-propostas">
+            <div class="page-header"><div><h1>Orçamento Participativo</h1><p>Vote nas obras e melhorias que você quer no seu bairro</p></div></div>
+            <div id="propostas-lista" style="display:flex;flex-direction:column;gap:12px;">
+                <div class="empty-state"><div class="empty-icon">🗾</div><p>Carregando propostas...</p></div>
+            </div>
+        </div>
+
+        <!-- ORDENS DE SERVIÇO (Equipe) -->
+        <div class="page" id="page-ordens">
+            <div class="page-header"><div><h1>Ordens de Serviço</h1><p>Chamados agrupados para atendimento eficiente</p></div></div>
+            <div class="stats-grid" style="margin-bottom:16px;">
+                <div class="stat-card teal"><div class="stat-label">Pendentes</div><div class="stat-value" id="os-pendentes">—</div></div>
+                <div class="stat-card warn"><div class="stat-label">Em Andamento</div><div class="stat-value" id="os-andamento">—</div></div>
+                <div class="stat-card success"><div class="stat-label">Concluídas</div><div class="stat-value" id="os-concluidas">—</div></div>
+            </div>
+            <div id="ordens-lista" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="empty-state"><div class="empty-icon">📋</div><p>Nenhuma ordem de serviço</p></div>
+            </div>
+        </div>
+
+        <!-- RASTREAMENTO GPS (Equipe) -->
+        <div class="page" id="page-gps">
+            <div class="page-header"><div><h1>Minha Localização</h1><p>Compartilhe sua posição com o gestor</p></div></div>
+            <div class="card" style="padding:20px;margin-bottom:16px;">
+                <div id="gps-status-msg" style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:12px;">GPS não ativado</div>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn-primary" onclick="iniciarGPS()" id="btn-gps-start">📡 Iniciar rastreamento</button>
+                    <button class="btn-action" onclick="pararGPS()" id="btn-gps-stop" style="display:none">⏹ Parar</button>
+                </div>
+                <div style="margin-top:12px;font-size:0.8rem;color:var(--text-muted);">Posição enviada automaticamente a cada 30 segundos.</div>
+            </div>
+            <div id="map-gps" style="height:350px;border-radius:12px;overflow:hidden;"></div>
+        </div>
+
+        <!-- SLA DA SECRETARIA (Secretaria) -->
+        <div class="page" id="page-sla">
+            <div class="page-header"><div><h1>Painel SLA</h1><p>Controle de prazos de atendimento da sua secretaria</p></div></div>
+            <div class="stats-grid" style="margin-bottom:16px;">
+                <div class="stat-card teal"><div class="stat-label">No Prazo</div><div class="stat-value" id="sla-ok">—</div></div>
+                <div class="stat-card danger"><div class="stat-label">Atrasados</div><div class="stat-value" id="sla-atrasados">—</div></div>
+                <div class="stat-card warn"><div class="stat-label">Vencendo Hoje</div><div class="stat-value" id="sla-hoje">—</div></div>
+            </div>
+            <div id="sla-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- EQUIPES (Gestor) -->
+        <div class="page" id="page-equipes">
+            <div class="page-header"><div><h1>Mapa de Equipes</h1><p>Posição em tempo real das equipes de campo</p></div></div>
+            <div id="equipes-status" style="display:flex;flex-wrap:wrap;gap:10px;margin-bottom:16px;"></div>
+            <div id="map-equipes" style="height:420px;border-radius:12px;overflow:hidden;"></div>
+            <button class="btn-action" onclick="loadEquipes()" style="margin-top:12px;">🔄 Atualizar</button>
+        </div>
+
+        <!-- TRIAGEM IA (Gestor/Admin) -->
+        <div class="page" id="page-triagem">
+            <div class="page-header"><div><h1>Triagem por IA</h1><p>Classificador automático de chamados por categoria e prioridade</p></div></div>
+            <div class="form-section" style="max-width:600px;">
+                <h3>Testar triagem</h3>
+                <div class="field"><label>Título do chamado</label><input type="text" id="ia-titulo" placeholder="Ex: Buraco na via"></div>
+                <div class="field"><label>Descrição</label><textarea id="ia-descricao" placeholder="Descreva o problema..."></textarea></div>
+                <button class="btn-primary" onclick="testarTriagem()" style="max-width:180px;">Classificar →</button>
+                <div id="ia-resultado" style="margin-top:16px;"></div>
+            </div>
+            <div class="card" style="margin-top:24px;padding:16px;">
+                <h3 style="margin-bottom:12px;">Métricas de acurácia</h3>
+                <div id="ia-metricas"><p style="color:var(--text-muted);font-size:0.85rem;">Carregando...</p></div>
+            </div>
+        </div>
+
+        <!-- PREVISÃO DE DEMANDA (Gestor/Admin) -->
+        <div class="page" id="page-previsao">
+            <div class="page-header"><div><h1>Previsão de Demanda</h1><p>Estimativa de chamados das próximas semanas por bairro</p></div></div>
+            <div id="previsao-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- AUDITORIA (Admin) -->
+        <div class="page" id="page-auditoria">
+            <div class="page-header"><div><h1>Auditoria</h1><p>Trilha imutável de todas as ações do sistema</p></div></div>
+            <div style="display:flex;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+                <button class="btn-action" onclick="loadAuditoria()">🔄 Atualizar</button>
+                <button class="btn-action success" onclick="verificarIntegridade()">🔐 Verificar Integridade</button>
+                <div id="auditoria-integra" style="font-size:0.85rem;padding:8px 12px;"></div>
+            </div>
+            <div id="auditoria-lista" style="display:flex;flex-direction:column;gap:6px;"></div>
+        </div>
+
+        <!-- USUÁRIOS (Admin) -->
+        <div class="page" id="page-usuarios">
+            <div class="page-header"><div><h1>Usuários</h1><p>Gerenciamento de todos os usuários do sistema</p></div></div>
+            <div id="usuarios-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- SENSORES IoT (Admin) -->
+        <div class="page" id="page-sensores">
+            <div class="page-header"><div><h1>Sensores IoT</h1><p>Dispositivos de monitoramento automático da cidade</p></div></div>
+            <div id="sensores-lista" style="display:flex;flex-direction:column;gap:8px;">
+                <div class="empty-state"><div class="empty-icon">📡</div><p>Carregando sensores...</p></div>
+            </div>
+        </div>
+
+        <!-- CONTRATOS (Admin) -->
+        <div class="page" id="page-contratos">
+            <div class="page-header"><div><h1>Contratos</h1><p>Fornecedores e contratos de prestação de serviços</p></div></div>
+            <div id="contratos-lista" style="display:flex;flex-direction:column;gap:8px;">
+                <div class="empty-state"><div class="empty-icon">📄</div><p>Carregando contratos...</p></div>
+            </div>
+        </div>
+
+        <!-- DASHBOARD -->
+        <div class="page" id="page-dashboard">
+            <div class="page-header">
+                <div>
+                    <h1>Dashboard</h1>
+                    <p>Visão geral dos chamados e indicadores</p>
+                </div>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card teal">
+                    <div class="stat-label">Total Chamados</div>
+                    <div class="stat-value" id="stat-total">—</div>
+                </div>
+                <div class="stat-card warn">
+                    <div class="stat-label">Em Andamento</div>
+                    <div class="stat-value" id="stat-andamento">—</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">Resolvidos</div>
+                    <div class="stat-value" id="stat-resolvidos">—</div>
+                </div>
+                <div class="stat-card blue">
+                    <div class="stat-label">Avaliação Média</div>
+                    <div class="stat-value" id="stat-avaliacao">—</div>
+                </div>
+                <div class="stat-card success">
+                    <div class="stat-label">Tempo Médio Resolução</div>
+                    <div class="stat-value" id="stat-tempo-medio">—</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Top Categorias</h3>
+                    <div id="chart-categorias"></div>
+                </div>
+                <div class="chart-card">
+                    <h3>Top Bairros</h3>
+                    <div id="chart-bairros"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- PAINEL SECRETARIA -->
+        <div class="page" id="page-painel-secretaria">
+            <div class="page-header"><div><h1>Painel da Secretaria</h1><p>Gestão do seu setor e equipe</p></div></div>
+            <div class="stats-grid" style="margin-bottom:16px;">
+                <div class="stat-card teal"><div class="stat-label">Chamados Hoje</div><div class="stat-value" id="sec-hoje">—</div></div>
+                <div class="stat-card warn"><div class="stat-label">Pendentes</div><div class="stat-value" id="sec-pendentes">—</div></div>
+                <div class="stat-card success"><div class="stat-label">Resolvidos Hoje</div><div class="stat-value" id="sec-resolvidos">—</div></div>
+            </div>
+            <div id="sec-chamados-lista" style="display:flex;flex-direction:column;gap:8px;"></div>
+        </div>
+
+        <!-- PAINEL ADMIN -->
+        <div class="page" id="page-painel-admin">
+            <div class="page-header"><div><h1>Painel Administrativo</h1><p>Visão completa do sistema</p></div></div>
+            <div class="stats-grid" style="margin-bottom:16px;">
+                <div class="stat-card teal"><div class="stat-label">Usuários</div><div class="stat-value" id="adm-usuarios">—</div></div>
+                <div class="stat-card blue"><div class="stat-label">Secretarias</div><div class="stat-value" id="adm-secretarias">—</div></div>
+                <div class="stat-card warn"><div class="stat-label">Serviços Ativos</div><div class="stat-value" id="adm-servicos">—</div></div>
+                <div class="stat-card success"><div class="stat-label">Sistema</div><div class="stat-value" style="font-size:1.2rem;">🔁 OK</div></div>
+            </div>
+            <div class="charts-grid">
+                <div class="chart-card"><h3>Chamados por Status</h3><div id="adm-chart-status"></div></div>
+                <div class="chart-card"><h3>Top Secretarias</h3><div id="adm-chart-secretarias"></div></div>
+            </div>
+        </div>
+
+    
+        <!-- CLIMA (Gestor) -->
+        <div class="page" id="page-clima">
+            <div class="page-header"><div><h1>Alertas de Clima</h1><p>Condições climáticas e alertas para equipes de campo</p></div></div>
+            <div id="clima-lista" style="display:flex;flex-direction:column;gap:10px;">
+                <div class="empty-state"><div class="empty-icon">🌦️</div><p>Carregando dados climáticos...</p></div>
+            </div>
+        </div>
+
+        <!-- RELATÓRIO PÚBLICO (Gestor/Admin) -->
+        <div class="page" id="page-relatorio">
+            <div class="page-header"><div><h1>Relatório Público</h1><p>Indicadores de zeladoria disponíveis ao cidadão</p></div></div>
+            <div id="relatorio-conteudo" style="display:flex;flex-direction:column;gap:12px;">
+                <div class="empty-state"><div class="empty-icon">📄</div><p>Carregando relatório...</p></div>
+            </div>
+        </div>
+
+    </div><!-- end .main-content -->
+</div><!-- end #main-app -->
+
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<!-- ═══════════════════════════════════════ MODALS ═══ -->
+
+<!-- Modal Detalhes -->
+<div class="modal" id="modal-detalhes">
+    <div class="modal-box">
+        <div class="modal-header">
+            <h2>Detalhes do Chamado</h2>
+            <button class="btn-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body" id="modal-body"></div>
+    </div>
+</div>
+
+<!-- Modal Onboarding -->
+<div class="modal" id="modal-onboarding" style="z-index:20001;">
+    <div class="modal-box" style="max-width:460px;">
+        <div class="modal-header">
+            <h2>Bem-vindo ao Zelô 🏛️</h2>
+            <button class="btn-close" onclick="fecharOnboarding()">✕</button>
+        </div>
+        <div class="modal-body" id="onboarding-body">
+            <p style="color:var(--text-muted);">Carregando...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Modal Reclassificar -->
+<div class="modal" id="modal-reclassificar">
+    <div class="modal-box" style="max-width: 760px;">
+        <div class="modal-header">
+            <h2>🔄 Reclassificar Chamado</h2>
+            <button class="btn-close" onclick="fecharModalReclassificar()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div id="chamado-atual-info" style="background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px; padding:14px; margin-bottom:18px;">
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:4px;">CHAMADO ATUAL</div>
+                <div id="chamado-atual-dados"></div>
+            </div>
+            <div class="field">
+                <label>Buscar serviço</label>
+                <input type="text" id="busca-servico-reclassificar" placeholder="Digite o nome do serviço..." oninput="buscarServicosReclassificar()">
+            </div>
+            <div class="form-row">
+                <div class="field">
+                    <label>Secretaria</label>
+                    <select id="filtro-secretaria-reclassificar" onchange="buscarServicosReclassificar()">
+                        <option value="">Todas</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>Prioridade</label>
+                    <select id="filtro-prioridade-reclassificar" onchange="buscarServicosReclassificar()">
+                        <option value="">Todas</option>
+                        <option value="emergencial">Emergencial</option>
+                        <option value="alta">Alta</option>
+                        <option value="media">Média</option>
+                        <option value="baixa">Baixa</option>
+                    </select>
+                </div>
+            </div>
+            <div id="servicos-lista-reclassificar" style="max-height:360px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;">
+                <div class="empty-state"><div class="empty-icon">🔍</div><p>Digite para buscar serviços</p></div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════════════════════ SCRIPTS ═══ -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+<script src="/static/catalogo-helper.js"></script>
+<script src="/static/reclassificacao.js"></script>
+<script src="/static/dashboard-executivo.js"></script>
+<script src="/static/comentarios.js"></script>
+
+<script>
+    const API_BASE = window.location.origin + '/api';
+    let currentUser = null;
+    let map = null;
+    let marker = null;
+    let allChamados = [];
+
+    function showLoading() { document.getElementById('loading').classList.add('active'); }
+    function hideLoading() { document.getElementById('loading').classList.remove('active'); }
+
+    function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        toast.className = 'toast ' + type;
+        document.getElementById('toast-message').textContent = message;
+        toast.classList.add('active');
+        setTimeout(() => toast.classList.remove('active'), 3500);
+    }
+
+    function getToken() { return localStorage.getItem('token'); }
+
+    async function apiRequest(endpoint, options = {}) {
+        const token = getToken();
+        const headers = { 'Content-Type': 'application/json', ...options.headers };
+        if (token) headers['Authorization'] = `Bearer ${token}`;
+        const response = await fetch(API_BASE + endpoint, { ...options, headers });
+        if (response.status === 401) { logout(); throw new Error('Sessão expirada'); }
+        return response;
+    }
+
+    function logout() {
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        currentUser = null;
+        document.getElementById('login-page').style.display = '';
+        document.getElementById('main-app').classList.remove('visible');
+        document.getElementById('login-email').value = '';
+        document.getElementById('login-password').value = '';
+    }
+
+    function initials(name) {
+        return name.split(' ').slice(0,2).map(n => n[0]).join('').toUpperCase();
+    }
+
+    // ─── Mobile sidebar ──────────────────────────────────
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+        sidebar.classList.toggle('open');
+        overlay.classList.toggle('active');
+    }
+
+    // ─── Login ────────────────────────────────
+    document.querySelectorAll('.tab-switcher button').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.tab-switcher button').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            const tab = btn.dataset.tab;
+            document.getElementById('login-form').classList.toggle('hidden', tab !== 'login');
+            document.getElementById('register-form').classList.toggle('hidden', tab !== 'register');
+        });
+    });
+
+    // loginDemo: um clique → login imediato sem preencher formulário
+    async function loginDemo(email, senha) {
+        showLoading();
+        try {
+            const res = await fetch(API_BASE + '/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.usuario));
+                currentUser = data.usuario;
+                showToast('Bem-vindo ao Zelô! 🏛️');
+                loadMainApp();
+            } else {
+                showToast(data.detail || 'Erro no acesso demo', 'error');
+            }
+        } catch (err) {
+            showToast('Erro de conexão', 'error');
+        } finally {
+            hideLoading();
+        }
+    }
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const senha = document.getElementById('login-password').value;
+        showLoading();
+        try {
+            const res = await fetch(API_BASE + '/auth/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, senha })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                localStorage.setItem('token', data.access_token);
+                localStorage.setItem('user', JSON.stringify(data.usuario));
+                currentUser = data.usuario;
+                showToast('Bem-vindo ao Zelô! 🏛️');
+                loadMainApp();
+            } else {
+                showToast(data.detail || 'Credenciais inválidas', 'error');
+            }
+        } catch (err) {
+            showToast('Erro de conexão', 'error');
+        } finally { hideLoading(); }
+    });
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        showLoading();
+        try {
+            const res = await apiRequest('/auth/register', {
+                method: 'POST',
+                body: JSON.stringify({
+                    nome: document.getElementById('register-nome').value,
+                    email: document.getElementById('register-email').value,
+                    telefone: document.getElementById('register-telefone').value,
+                    senha: document.getElementById('register-password').value,
+                    tipo: 'cidadao'
+                })
+            });
+            const data = await res.json();
+            if (res.ok) {
+                showToast('Conta criada! Faça login.');
+                document.querySelector('.tab-switcher button').click();
+                document.getElementById('login-email').value = document.getElementById('register-email').value;
+            } else {
+                showToast(data.detail || 'Erro ao cadastrar', 'error');
+            }
+        } catch (err) {
+            showToast('Erro de conexão', 'error');
+        } finally { hideLoading(); }
+    });
+
+    // ─── Main App 
+    const NAV_CONFIGS = {
+        cidadao: [
+            { section: 'Meus Chamados' },
+            { tab: 'chamados',      icon: '📋', label: 'Meus Chamados', badge: 'badge-chamados' },
+            { tab: 'novo-chamado',  icon: '➕', label: 'Abrir Chamado' },
+            { section: 'Comunidade' },
+            { tab: 'perfil',        icon: '🏆', label: 'Meu Perfil' },
+            { tab: 'ranking',       icon: '🌟', label: 'Ranking' },
+            { tab: 'propostas',     icon: '🗾', label: 'Propostas' },
+            { section: 'Serviços' },
+            { tab: 'catalogo',      icon: '📚', label: 'Catálogo' },
+        ],
+        equipe: [
+            { section: 'Campo' },
+            { tab: 'chamados',      icon: '📋', label: 'Chamados', badge: 'badge-chamados' },
+            { tab: 'ordens',        icon: '📋', label: 'Ordens de Serviço' },
+            { tab: 'gps',           icon: '📡', label: 'Meu GPS' },
+            { section: 'Consulta' },
+            { tab: 'mapa',          icon: '🏘️', label: 'Mapa de Calor' },
+            { tab: 'catalogo',      icon: '📚', label: 'Catálogo' },
+        ],
+        secretaria: [
+            { section: 'Minha Secretaria' },
+            { tab: 'chamados',      icon: '📋', label: 'Chamados', badge: 'badge-chamados' },
+            { tab: 'sla',           icon: '⏱', label: 'Painel SLA' },
+            { tab: 'dashboard',     icon: '📊', label: 'Dashboard' },
+            { section: 'Ferramentas' },
+            { tab: 'triagem',       icon: '🧠', label: 'Triagem IA' },
+            { tab: 'mapa',          icon: '🏘️', label: 'Mapa de Calor' },
+        ],
+        gestor: [
+            { section: 'Gestão' },
+            { tab: 'chamados',      icon: '📋', label: 'Todos os Chamados', badge: 'badge-chamados' },
+            { tab: 'dashboard',     icon: '📊', label: 'Dashboard' },
+            { tab: 'ordens',        icon: '📋', label: 'Ordens de Serviço' },
+            { section: 'Inteligência' },
+            { tab: 'mapa',          icon: '🏘️', label: 'Mapa de Calor' },
+            { tab: 'clusters',      icon: '🔍', label: 'Agrupamentos' },
+            { tab: 'equipes',       icon: '📍', label: 'Equipes no Campo' },
+            { tab: 'clima',         icon: '🌦️', label: 'Alertas Clima' },
+            { tab: 'triagem',       icon: '🧫', label: 'Triagem IA' },
+            { tab: 'previsao',      icon: '📈', label: 'Previsão Demanda' },
+            { section: 'Relatórios' },
+            { tab: 'relatorio',     icon: '📄', label: 'Relatório Público' },
+            { tab: 'sla',           icon: '⏱', label: 'Painel SLA' },
+        ],
+        admin: [
+            { section: 'Gestão Total' },
+            { tab: 'chamados',      icon: '📋', label: 'Todos os Chamados', badge: 'badge-chamados' },
+            { tab: 'dashboard',     icon: '📊', label: 'Dashboard' },
+            { tab: 'ordens',        icon: '📋', label: 'Ordens de Serviço' },
+            { section: 'Inteligência' },
+            { tab: 'mapa',          icon: '🏘️', label: 'Mapa de Calor' },
+            { tab: 'clusters',      icon: '🔍', label: 'Agrupamentos' },
+            { tab: 'equipes',       icon: '📍', label: 'Equipes no Campo' },
+            { tab: 'clima',         icon: '🌦️', label: 'Alertas Clima' },
+            { tab: 'triagem',       icon: '🧠', label: 'Triagem IA' },
+            { tab: 'previsao',      icon: '📈', label: 'Previsão Demanda' },
+            { section: 'Administração' },
+            { tab: 'usuarios',      icon: '👥', label: 'Usuários' },
+            { tab: 'sensores',      icon: '📡', label: 'Sensores IoT' },
+            { tab: 'contratos',     icon: '📄', label: 'Contratos' },
+            { tab: 'auditoria',     icon: '🔐', label: 'Auditoria' },
+            { section: 'Relatórios' },
+            { tab: 'relatorio',     icon: '📄', label: 'Relatório Público' },
+            { tab: 'sla',           icon: '⏱', label: 'Painel SLA' },
+            { tab: 'catalogo',      icon: '📚', label: 'Catálogo' },
+        ],
+    };
+
+    function setupNavPorPerfil(tipo) {
+        const nav = document.getElementById('sidebar-nav');
+        const items = NAV_CONFIGS[tipo] || NAV_CONFIGS.cidadao;
+        nav.innerHTML = items.map(item => {
+            if (item.section) return `<div class="nav-section">${item.section}</div>`;
+            const badgeHTML = item.badge ? `<span class="badge" id="${item.badge}" style="display:none">0</span>` : '';
+            const isFirst = items.find(i => i.tab) === item;
+            return `<button class="nav-item${isFirst?' active':''}" data-tab="${item.tab}">
+                <span class="icon">${item.icon}</span> ${item.label}${badgeHTML}
+            </button>`;
+        }).join('');
+
+        nav.querySelectorAll('.nav-item[data-tab]').forEach(btn => {
+            btn.addEventListener('click', () => {
+                nav.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+                btn.classList.add('active');
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                const tab = btn.dataset.tab;
+                document.getElementById('page-' + tab)?.classList.add('active');
+                document.getElementById('topbar-title').textContent = btn.textContent.trim().replace(/\d+$/, '').trim();
+                onTabChange(tab);
+            });
+        });
+    }
+
+    function onTabChange(tab) {
+        const handlers = {
+            dashboard:  loadDashboard,
+            mapa:       carregarMapa,
+            clusters:   carregarClusters,
+            clima:      carregarClima,
+            relatorio:  carregarRelatorio,
+            ranking:    loadRanking,
+            perfil:     loadPerfil,
+            propostas:  loadPropostas,
+            ordens:     loadOrdens,
+            equipes:    loadEquipes,
+            triagem:    loadTriagemMetricas,
+            previsao:   loadPrevisao,
+            auditoria:  loadAuditoria,
+            usuarios:   loadUsuarios,
+            sensores:   loadSensores,
+            contratos:  loadContratos,
+            sla:        loadSLA,
+        };
+        if (handlers[tab]) handlers[tab]();
+    }
+
+    async function loadMainApp() {
+        document.getElementById('login-page').style.display = 'none';
+        document.getElementById('main-app').classList.add('visible');
+
+        const u = currentUser;
+        document.getElementById('user-avatar').textContent = initials(u.nome);
+        document.getElementById('user-name-sidebar').textContent = u.nome.split(' ')[0];
+
+        const ROLE_LABELS = {
+            cidadao:   'Cidadão',
+            equipe:    'Equipe de Campo',
+            secretaria:'Secretaria',
+            gestor:    'Gestor',
+            admin:     'Administrador',
+        };
+        document.getElementById('user-role-badge').textContent = ROLE_LABELS[u.tipo] || u.tipo;
+
+        setupNavPorPerfil(u.tipo);
+
+        const chamadosTitles = {
+            cidadao:    ['Meus Chamados', 'Acompanhe o status dos seus chamados'],
+            equipe:     ['Chamados Atribuídos', 'Chamados sob sua responsabilidade'],
+            secretaria: ['Chamados da Secretaria', 'Gerencie os chamados da sua área'],
+            gestor:     ['Todos os Chamados', 'Visão completa de todos os chamados'],
+            admin:      ['Todos os Chamados', 'Visão e controle total do sistema'],
+        };
+        const [t, s] = chamadosTitles[u.tipo] || chamadosTitles.gestor;
+        document.getElementById('chamados-title').textContent = t;
+        document.getElementById('chamados-subtitle').textContent = s;
+
+        if (u.tipo === 'cidadao') {
+            document.getElementById('pts-sidebar').style.display = 'flex';
+            loadPontosSidebar();
+        }
+
+        await loadCategorias();
+        await loadBairros();
+        await loadChamados();
+        initMap();
+
+        if (typeof carregarCatalogoCompleto === 'function') carregarCatalogoCompleto();
+    }
+
+    async function loadPontosSidebar() {
+        try {
+            const r = await apiRequest('/engajamento/meu-perfil');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('sidebar-pts').textContent = d.pontos || 0;
+            document.getElementById('sidebar-nivel').textContent = d.nivel || 'iniciante';
+        } catch(e) {}
+    }
+
+    async function loadPerfil() {
+        try {
+            const r = await apiRequest('/engajamento/meu-perfil');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('perfil-gami-card').innerHTML = `
+                <div class="card" style="padding:20px;">
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+                        <div style="font-size:2.5rem;">${d.icone_nivel || '🌱'}</div>
+                        <div>
+                            <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:800;">${d.nivel || 'Iniciante'}</div>
+                            <div style="font-size:0.85rem;color:var(--text-muted);">${d.pontos} pontos acumulados</div>
+                        </div>
+                    </div>
+                    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;">
+                        <div style="text-align:center;padding:10px;background:var(--bg-elevated);border-radius:8px;">
+                            <div style="font-size:1.4rem;font-weight:700;color:var(--accent);">${d.chamados_abertos}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">Chamados abertos</div>
+                        </div>
+                        <div style="text-align:center;padding:10px;background:var(--bg-elevated);border-radius:8px;">
+                            <div style="font-size:1.4rem;font-weight:700;color:var(--accent);">${d.votos_dados}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">Upvotes dados</div>
+                        </div>
+                        <div style="text-align:center;padding:10px;background:var(--bg-elevated);border-radius:8px;">
+                            <div style="font-size:1.4rem;font-weight:700;color:var(--accent);">${d.avaliacoes_feitas}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">Avaliações</div>
+                        </div>
+                    </div>
+                    ${d.proximo_nivel ? `<div style="font-size:0.8rem;color:var(--text-muted);">Faltam <strong>${d.proximo_nivel.pontos_necessarios} pts</strong> para ${d.proximo_nivel.nome}</div>` : '<div style="font-size:0.8rem;color:var(--success);">Nível máximo atingido!</div>'}
+                </div>`;
+
+            document.getElementById('perfil-conquistas').innerHTML = d.conquistas.length ? d.conquistas.map(c =>
+                `<div style="background:var(--bg-elevated);border:1px solid var(--border);border-radius:8px;padding:10px;text-align:center;">
+                    <div style="font-size:1.5rem;margin-bottom:4px;">${c.icone}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);">${c.descricao}</div>
+                </div>`
+            ).join('') : '<p style="color:var(--text-muted);grid-column:1/-1;">Nenhuma conquista ainda. Abra chamados para ganhar!</p>';
+        } catch(e) { console.error('Perfil:', e); }
+    }
+
+    async function loadRanking() {
+        try {
+            const r = await apiRequest('/engajamento/ranking');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('ranking-lista').innerHTML = d.map((u, i) =>
+                `<div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--bg-elevated);border-radius:8px;">
+                    <div style="font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;min-width:32px;color:${i<3?'var(--accent)':'var(--text-muted)'};">${'#'+(i+1)}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;">${u.nome}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${u.nivel} • ${u.chamados_abertos} chamados</div>
+                    </div>
+                    <div style="font-family:'Syne',sans-serif;font-weight:700;color:var(--accent);">${u.pontos} pts</div>
+                </div>`
+            ).join('') || '<div class="empty-state"><p>Sem dados ainda</p></div>';
+        } catch(e) {}
+    }
+
+    async function loadPropostas() {
+        try {
+            const r = await fetch(API_BASE.replace('/api','') + '/api/transparencia/propostas');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('propostas-lista').innerHTML = d.length ? d.map(p =>
+                `<div class="card" style="padding:16px;">
+                    <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                        <div style="flex:1;">
+                            <div style="font-weight:600;margin-bottom:4px;">${p.titulo}</div>
+                            <div style="font-size:0.8rem;color:var(--text-muted);">${
+                                [p.categoria, p.bairro].filter(Boolean).join(' • ')
+                            }</div>
+                        </div>
+                        <div style="text-align:right;">
+                            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:1.3rem;color:var(--accent);">${p.total_votos}</div>
+                            <div style="font-size:0.68rem;color:var(--text-muted);">votos</div>
+                        </div>
+                    </div>
+                    <button class="btn-action" style="margin-top:10px;" onclick="votarProposta(${p.id}, this)">Apoiar esta proposta</button>
+                </div>`
+            ).join('') : '<div class="empty-state"><div class="empty-icon">🗾</div><p>Nenhuma proposta em votação no momento</p></div>';
+        } catch(e) {}
+    }
+
+    async function votarProposta(id, btn) {
+        try {
+            const r = await apiRequest(`/transparencia/propostas/${id}/votar`, { method: 'POST' });
+            if (r.ok) { showToast('Voto registrado!'); loadPropostas(); }
+        } catch(e) {}
+    }
+
+    async function loadOrdens() {
+        try {
+            const r = await apiRequest('/geo/ordens');
+            if (!r.ok) return;
+            const ordens = await r.json();
+            const pendentes = ordens.filter(o => o.status === 'pendente').length;
+            const emAndamento = ordens.filter(o => o.status === 'em_andamento').length;
+            const concluidas = ordens.filter(o => o.status === 'concluida').length;
+            document.getElementById('os-pendentes').textContent = pendentes;
+            document.getElementById('os-andamento').textContent = emAndamento;
+            document.getElementById('os-concluidas').textContent = concluidas;
+            const PRIO_CORES = { critica:'var(--danger)', alta:'var(--warn)', media:'var(--accent)', baixa:'var(--success)' };
+            document.getElementById('ordens-lista').innerHTML = ordens.length ? ordens.map(o =>
+                `<div class="card" style="padding:14px;border-left:3px solid ${PRIO_CORES[o.prioridade] || 'var(--border)'}">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <strong>${o.titulo}</strong>
+                        <span class="badge ${o.status}">${o.status.replace('_',' ')}</span>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);margin-bottom:10px;">${o.total_chamados} chamados Prioridade: ${o.prioridade}</div>
+                    <div style="display:flex;gap:8px;">
+                        ${o.status === 'pendente' ? `<button class="btn-action" onclick="mudarStatusOrdem(${o.id},'em_andamento')">Iniciar</button>` : ''}
+                        ${o.status === 'em_andamento' ? `<button class="btn-action success" onclick="mudarStatusOrdem(${o.id},'concluida')">Concluir</button>` : ''}
+                    </div>
+                </div>`
+            ).join('') : '<div class="empty-state"><p>Nenhuma ordem de serviço</p></div>';
+        } catch(e) {}
+    }
+
+    async function mudarStatusOrdem(id, status) {
+        try {
+            const r = await apiRequest(`/geo/ordens/${id}/status?novo_status=${status}`, { method: 'PATCH' });
+            if (r.ok) { showToast('Ordem atualizada!'); loadOrdens(); }
+        } catch(e) {}
+    }
+
+    let gpsInterval = null;
+    let mapGPS = null;
+    let marcadorGPS = null;
+
+    function iniciarGPS() {
+        if (!navigator.geolocation) { showToast('Geolocação não suportada', 'warning'); return; }
+        document.getElementById('btn-gps-start').style.display = 'none';
+        document.getElementById('btn-gps-stop').style.display = '';
+        document.getElementById('gps-status-msg').textContent = '📡 Rastreamento ativo — enviando a cada 30s';
+
+        if (!mapGPS) {
+            mapGPS = L.map('map-gps').setView([-1.4558, -48.4902], 14);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapGPS);
+        }
+
+        const enviarPos = () => {
+            navigator.geolocation.getCurrentPosition(async pos => {
+                const { latitude, longitude, accuracy, speed } = pos.coords;
+                if (!marcadorGPS) marcadorGPS = L.marker([latitude, longitude]).addTo(mapGPS);
+                else marcadorGPS.setLatLng([latitude, longitude]);
+                mapGPS.setView([latitude, longitude], 15);
+                await apiRequest('/geo/equipes/localizacao', {
+                    method: 'POST',
+                    body: JSON.stringify({ latitude, longitude, precisao_m: accuracy, velocidade: speed ? speed*3.6 : null, em_servico: true })
+                });
+                document.getElementById('gps-status-msg').textContent =
+                    `📍 Lat ${latitude.toFixed(5)}, Lon ${longitude.toFixed(5)} — ${new Date().toLocaleTimeString('pt-BR')}`;
+            });
+        };
+        enviarPos();
+        gpsInterval = setInterval(enviarPos, 30000);
+    }
+
+    function pararGPS() {
+        clearInterval(gpsInterval);
+        gpsInterval = null;
+        document.getElementById('btn-gps-start').style.display = '';
+        document.getElementById('btn-gps-stop').style.display = 'none';
+        document.getElementById('gps-status-msg').textContent = 'GPS parado';
+    }
+
+    let mapEquipes = null;
+    async function loadEquipes() {
+        try {
+            const r = await apiRequest('/geo/equipes/mapa');
+            if (!r.ok) return;
+            const d = await r.json();
+
+            if (!mapEquipes) {
+                mapEquipes = L.map('map-equipes').setView([-1.4558, -48.4902], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapEquipes);
+            }
+
+            mapEquipes.eachLayer(l => { if (l instanceof L.Marker) mapEquipes.removeLayer(l); });
+
+            document.getElementById('equipes-status').innerHTML = d.equipes.map(e =>
+                `<div style="padding:8px 12px;background:var(--bg-elevated);border-radius:8px;border-left:3px solid ${e.online?'var(--success)':'var(--danger)'}">
+                    <div style="font-weight:600;font-size:0.85rem;">${e.nome}</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);">${e.online ? '🟢 Online' : '🔴 Offline'} • ${e.segundos_desde_update}s atrás</div>
+                </div>`
+            ).join('') || '<p style="color:var(--text-muted);font-size:0.85rem;">Nenhuma equipe rastreada</p>';
+
+            d.equipes.forEach(e => {
+                const cor = e.online ? '🟢' : '🔴';
+                L.marker([e.latitude, e.longitude])
+                    .addTo(mapEquipes)
+                    .bindPopup(`${cor} <strong>${e.nome}</strong><br>Bat: ${e.bateria || '?'}%`);
+            });
+        } catch(e) {}
+    }
+
+    async function loadSLA() {
+        try {
+            const r = await apiRequest('/chamados?status=aberto&status=em_andamento');
+            if (!r.ok) return;
+            const resp = await r.json();
+            const chamados = Array.isArray(resp) ? resp : (resp.items || []);
+            const agora = new Date();
+
+            let ok = 0, atrasados = 0, hojeFim = 0;
+            const lista = chamados.map(c => {
+                const criado = new Date(c.created_at);
+                const slaHoras = c.categoria?.sla_horas || 48;
+                const prazo = new Date(criado.getTime() + slaHoras * 3600000);
+                const diff = prazo - agora;
+                const atrasado = diff < 0;
+                const hoje = diff > 0 && diff < 86400000;
+                if (atrasado) atrasados++; else if (hoje) hojeFim++; else ok++;
+                return { ...c, prazo, atrasado, hoje, diffH: Math.round(diff / 3600000) };
+            });
+
+            document.getElementById('sla-ok').textContent = ok;
+            document.getElementById('sla-atrasados').textContent = atrasados;
+            document.getElementById('sla-hoje').textContent = hojeFim;
+
+            lista.sort((a, b) => a.prazo - b.prazo);
+            document.getElementById('sla-lista').innerHTML = lista.map(c =>
+                `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-elevated);border-radius:8px;border-left:3px solid ${
+                    c.atrasado ? 'var(--danger)' : c.hoje ? 'var(--warn)' : 'var(--success)'}">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.9rem;">${c.titulo}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${c.protocolo} • ${c.categoria?.nome||'—'} • ${c.bairro?.nome||'—'}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-size:0.8rem;font-weight:600;color:${c.atrasado?'var(--danger)':c.hoje?'var(--warn)':'var(--success)'}">
+                            ${c.atrasado ? `⚠️ ${Math.abs(c.diffH)}h atrasado` : `⏳ ${c.diffH}h restantes`}
+                        </div>
+                        <div style="font-size:0.68rem;color:var(--text-muted);">Prazo: ${c.prazo.toLocaleString('pt-BR', {day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'})}</div>
+                    </div>
+                </div>`
+            ).join('') || '<p style="color:var(--text-muted);">Nenhum chamado em aberto</p>';
+        } catch(e) {}
+    }
+
+    async function testarTriagem() {
+        const titulo = document.getElementById('ia-titulo').value.trim();
+        const descricao = document.getElementById('ia-descricao').value.trim();
+        if (!titulo) { showToast('Informe o título', 'warning'); return; }
+        try {
+            const r = await apiRequest('/ia/triar', { method:'POST', body: JSON.stringify({ titulo, descricao }) });
+            if (!r.ok) return;
+            const d = await r.json();
+            const pct = Math.round(d.confianca * 100);
+            document.getElementById('ia-resultado').innerHTML = `
+                <div style="background:var(--accent-dim);border:1px solid var(--border-active);border-radius:10px;padding:14px;">
+                    <div style="font-size:0.75rem;color:var(--text-muted);margin-bottom:8px;">RESULTADO DA CLASSIFICAÇÃO</div>
+                    <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:8px;">
+                        <div><div style="font-size:0.7rem;color:var(--text-muted);">Categoria</div><strong>${d.categoria_sugerida}</strong></div>
+                        <div><div style="font-size:0.7rem;color:var(--text-muted);">Prioridade</div><strong>${d.prioridade_sugerida.toUpperCase()}</strong></div>
+                        <div><div style="font-size:0.7rem;color:var(--text-muted);">Secretaria</div><strong>${d.secretaria_sugerida}</strong></div>
+                        <div><div style="font-size:0.7rem;color:var(--text-muted);">Confiança</div><strong>${pct}%</strong></div>
+                    </div>
+                    <div style="margin-top:10px;">
+                        <div style="height:6px;background:var(--bg-card);border-radius:3px;overflow:hidden;">
+                            <div style="height:100%;width:${pct}%;background:${pct>60?'var(--success)':pct>40?'var(--warn)':'var(--danger)'};border-radius:3px;"></div>
+                        </div>
+                    </div>
+                </div>`;
+        } catch(e) {}
+    }
+
+    async function loadTriagemMetricas() {
+        try {
+            const r = await apiRequest('/ia/triagem/metricas');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('ia-metricas').innerHTML = `
+                <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;">
+                    <div style="text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--accent);">${d.total_triagens}</div><div style="font-size:0.72rem;color:var(--text-muted);">Triagens totais</div></div>
+                    <div style="text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--success);">${d.taxa_aceitacao}%</div><div style="font-size:0.72rem;color:var(--text-muted);">Taxa aceitação</div></div>
+                    <div style="text-align:center;"><div style="font-size:1.4rem;font-weight:700;color:var(--accent)">${Math.round(d.confianca_media*100)}%</div><div style="font-size:0.72rem;color:var(--text-muted);">Confiança média</div></div>
+                </div>`;
+        } catch(e) {}
+    }
+
+    async function loadPrevisao() {
+        try {
+            const r = await apiRequest('/ia/previsao/demanda?semanas_futuro=2');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('previsao-lista').innerHTML = d.previsoes.slice(0,15).map(p =>
+                `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-elevated);border-radius:8px;">
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.9rem;">${p.bairro} <span style="font-weight:400;color:var(--text-muted);"> • ${p.regiao || ''}</span></div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${p.semana_inicio} → ${p.semana_fim}</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <div style="font-family:'Syne',sans-serif;font-size:1.3rem;font-weight:700;color:${p.alerta?'var(--danger)':'var(--accent)'}">${p.previsao}</div>
+                        <div style="font-size:0.68rem;color:var(--text-muted);">chamados prev.</div>
+                    </div>
+                </div>`
+            ).join('') || '<div class="empty-state"><p>Sem histórico suficiente para previsões</p></div>';
+        } catch(e) {}
+    }
+
+    async function loadAuditoria() {
+        try {
+            const r = await apiRequest('/transparencia/auditoria?limit=30');
+            if (!r.ok) return;
+            const blocos = await r.json();
+            document.getElementById('auditoria-lista').innerHTML = blocos.map(b =>
+                `<div style="padding:10px 14px;background:var(--bg-elevated);border-radius:8px;font-size:0.82rem;">
+                    <div style="display:flex;justify-content:space-between;">
+                        <span><strong>${b.entidade}</strong> #${b.entidade_id} • ${b.acao}</span>
+                        <span style="color:var(--text-muted);font-size:0.72rem;">${new Date(b.criado_em).toLocaleString('pt-BR')}</span>
+                    </div>
+                    <div style="color:var(--text-muted);font-size:0.72rem;margin-top:4px;">Hash: <code>${b.hash}</code></div>
+                </div>`
+            ).join('');
+        } catch(e) {}
+    }
+
+    async function verificarIntegridade() {
+        try {
+            const r = await apiRequest('/transparencia/auditoria/verificar');
+            if (!r.ok) return;
+            const d = await r.json();
+            const el = document.getElementById('auditoria-integra');
+            el.innerHTML = d.integro ? `<span style="color:var(--success);font-weight:600;">${d.total_blocos} blocos - Cadeia íntegra</span>` : `<span style="color:var(--danger);font-weight:600;">Bloco(cs) comprometido(s)</span>`;
+        } catch(e) {}
+    }
+
+    async function loadUsuarios() {
+        try {
+            const r = await apiRequest('/usuarios');
+            if (!r.ok) return;
+            const d = await r.json();
+            const ROLE_BADGE = { cidadao:'Cidadão', equipe:'Equipe', secretaria:'Secretaria', gestor:'Gestor', admin: 'Admin' };
+            document.getElementById('usuarios-lista').innerHTML = d.map(u =>
+                `<div style="display:flex;align-items:center;gap:12px;padding:10px 14px;background:var(--bg-elevated);border-radius:8px;">
+                    <div style="width:36px;height:36px;border-radius:50%;background:var(--accent-dim);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:var(--accent);">${initials(u.nome)}</div>
+                    <div style="flex:1;">
+                        <div style="font-weight:600;font-size:0.9rem;">${u.nome}</div>
+                        <div style="font-size:0.75rem;color:var(--text-muted);">${u.email}</div>
+                    </div>
+                    <span style="font-size:0.78rem;padding:3px 10px;border-radius:20px;background:var(--bg-card);">${ROLE_BADGE[u.tipo]||u.tipo}</span>
+                </div>`
+            ).join('');
+        } catch(e) {}
+    }
+
+    async function loadSensores() {
+        try {
+            const r = await apiRequest('/integracoes/sensores');
+            if (!r.ok) { document.getElementById('sensores-lista').innerHTML = '<div class="empty-state"><p>Sem sensores cadastrados</p></div>'; return; }
+            const d = await r.json();
+            document.getElementById('sensores-lista').innerHTML = d.map(s =>
+                `<div style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:var(--bg-elevated);border-radius:8px;">
+                    <div style="flex:1;"><div style="font-weight:600;">${s.nome}</div><div style="font-size:0.75rem;color:var(--text-muted);">${s.tipo} • ${s.bairro}</div></div>
+                    <span style="font-size:0.8rem;padding:3px 8px;border-radius:6px;background:${s.status==='ativo'?'var(--accent-dim)':'var(--bg-card)'};color:${s.status==='ativo'?'var(--accent)':'var(--text-muted)'}">${s.status}</span>
+                </div>`
+            ).join('') || '<div class="empty-state"><p>Nenhum sensor cadastrado</p></div>';
+        } catch(e) { document.getElementById('sensores-lista').innerHTML = '<div class="empty-state"><p>Erro ao carregar sensores</p></div>'; }
+    }
+
+    async function loadContratos() {
+        try {
+            const r = await apiRequest('/contratos');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('contratos-lista').innerHTML = (d.items||d).map(c =>
+                `<div style="padding:12px 16px;background:var(--bg-elevated);border-radius:8px;">
+                    <div style="font-weight:600;margin-bottom:4px;">${c.numero} — ${c.objeto}</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">${c.fornecedor} • R$ ${Number(c.valor).toLocaleString('pt-BR',{minimumFractionDigits:2})}</div>
+                </div>`
+            ).join('') || '<div class="empty-state"><p>Nenhum contrato cadastrado</p></div>';
+        } catch(e) {}
+    }
+
+    // ── Restante das funções (chamados, dashboard, mapas, etc.) ───────────────
+    async function loadCategorias() {
+        try {
+            const r = await apiRequest('/categorias');
+            const d = await r.json();
+            ['categoria'].forEach(id => {
+                const sel = document.getElementById(id);
+                if (!sel) return;
+                sel.innerHTML = '<option value="">Selecione...</option>' +
+                    d.map(c => `<option value="${c.id}">${c.nome}</option>`).join('');
+            });
+        } catch(e) {}
+    }
+
+    async function loadBairros() {
+        try {
+            const r = await apiRequest('/bairros');
+            const d = await r.json();
+            const sel = document.getElementById('bairro');
+            if (sel) sel.innerHTML = '<option value="">Selecione...</option>' +
+                d.map(b => `<option value="${b.id}">${b.nome}</option>`).join('');
+        } catch(e) {}
+    }
+
+    async function loadChamados(pagina = 1) {
+        try {
+            const status = document.getElementById('filter-status')?.value || '';
+            const prio   = document.getElementById('filter-prioridade')?.value || '';
+            const search = document.getElementById('filter-search')?.value || '';
+            let url = `/chamados?page=${pagina}&limit=20`;
+            if (status) url += `&status=${status}`;
+            if (prio)   url += `&prioridade=${prio}`;
+            if (search) url += `&search=${encodeURIComponent(search)}`;
+
+            const r = await apiRequest(url);
+            if (!r.ok) return;
+            const resp = await r.json();
+            const chamados = resp.items || resp;
+            const total    = resp.total || chamados.length;
+            const totalPag = resp._totalPaginas || Math.ceil(total / 20);
+
+            allChamados = chamados;
+            const lista = document.getElementById('chamados-list');
+
+            if (!chamados.length) {
+                lista.innerHTML = '<div class="empty-state" style="grid-column:1/-1"><div class="empty-icon">📋</div><p>Nenhum chamado encontrado</p></div>';
+                return;
+            }
+
+            lista.innerHTML = chamados.map(c => `
+                <div class="chamado-card ${c.status}" onclick="openModal(${c.id})">
+                    <div class="chamado-card::before"></div>
+                    <div class="chamado-header">
+                        <div>
+                            <div class="chamado-protocolo">${c.protocolo}</div>
+                            <div class="chamado-title">${c.titulo}</div>
+                        </div>
+                        <span class="badge ${c.status}">${c.status.replace('_',' ')}</span>
+                    </div>
+                    <div class="chamado-meta">
+                        <span class="meta-tag">📍 ${c.bairro?.nome||'—'}</span>
+                        <span class="meta-tag">🏷️ ${c.categoria?.nome||'—'}</span>
+                        <span class="meta-tag badge ${c.prioridade}">${c.prioridade}</span>
+                        ${c.avaliacao ? `<span class="meta-tag">⭐ ${c.avaliacao}</span>` : ''}
+                    </div>
+                </div>`).join('');
+
+            if (totalPag > 1) {
+                lista.innerHTML += `<div style="grid-column:1/-1;display:flex;gap:8px;justify-content:center;margin-top:8px;">
+                    ${pagina > 1 ? `<button class="btn-secondary" onclick="loadChamados(${pagina-1})">&#8592; Anterior</button>` : ''}
+                    <span style="padding:8px 12px;font-size:0.85rem;color:var(--text-muted);">Página ${pagina} de ${totalPag}</span>
+                    ${pagina < totalPag ? `<button class="btn-secondary" onclick="loadChamados(${pagina+1})">Próxima &#8594;</button>` : ''}
+                </div>`;
+            }
+        } catch(e) { console.error('loadChamados:', e); }
+    }
+
+    ['filter-status','filter-prioridade'].forEach(id => {
+        document.getElementById(id)?.addEventListener('change', () => loadChamados());
+    });
+    document.getElementById('filter-search')?.addEventListener('input', () => {
+        clearTimeout(window._searchTimer);
+        window._searchTimer = setTimeout(() => loadChamados(), 400);
+    });
+
+    function initMap() {
+        if (map) return;
+        try {
+            map = L.map('map').setView([-1.4558, -48.4902], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OSM' }).addTo(map);
+            map.on('click', e => {
+                const { lat, lng } = e.latlng;
+                if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng]).addTo(map);
+                document.getElementById('latitude').value = lat.toFixed(6);
+                document.getElementById('longitude').value = lng.toFixed(6);
+            });
+            document.getElementById('btnGeolocation')?.addEventListener('click', () => {
+                if (!navigator.geolocation) return;
+                navigator.geolocation.getCurrentPosition(pos => {
+                    const { latitude: lat, longitude: lng } = pos.coords;
+                    map.setView([lat, lng], 16);
+                    if (marker) marker.setLatLng([lat, lng]); else marker = L.marker([lat, lng]).addTo(map);
+                    document.getElementById('latitude').value = lat.toFixed(6);
+                    document.getElementById('longitude').value = lng.toFixed(6);
+                    const geoStatus = document.getElementById('geo-status');
+                    if (geoStatus) { geoStatus.style.display='block'; geoStatus.style.background='var(--accent-dim)'; geoStatus.style.color='var(--accent)'; geoStatus.textContent=`📍 Localização obtida: ${lat.toFixed(5)}, ${lng.toFixed(5)}`; }
+                });
+            });
+        } catch(e) {}
+    }
+
+    document.getElementById('novo-chamado-form')?.addEventListener('submit', async e => {
+        e.preventDefault();
+        showLoading();
+        try {
+            const formData = new FormData();
+            formData.append('titulo', document.getElementById('titulo').value);
+            formData.append('descricao', document.getElementById('descricao').value);
+            formData.append('categoria_id', document.getElementById('categoria').value);
+            formData.append('bairro_id', document.getElementById('bairro').value);
+            const lat = document.getElementById('latitude').value;
+            const lng = document.getElementById('longitude').value;
+            const end = document.getElementById('endereco').value;
+            if (lat) formData.append('latitude', lat);
+            if (lng) formData.append('longitude', lng);
+            if (end) formData.append('endereco', end);
+            const foto = document.getElementById('foto').files[0];
+            if (foto) formData.append('foto', foto);
+            const token = getToken();
+            const res = await fetch(API_BASE + '/chamados', { method:'POST', headers:{ Authorization:`Bearer ${token}` }, body: formData });
+            const data = await res.json();
+            if (res.ok) {
+                showToast(`Chamado ${data.protocolo} registrado!`);
+                document.getElementById('novo-chamado-form').reset();
+                document.querySelector('[data-tab="chamados"]')?.click();
+            } else { showToast(data.detail || 'Erro ao enviar chamado', 'error'); }
+        } catch(err) { showToast('Erro de conexão', 'error'); } finally { hideLoading(); }
+    });
+
+    async function openModal(id) {
+        showLoading();
+        try {
+            const r = await apiRequest(`/chamados/${id}`);
+            if (!r.ok) return;
+            const c = await r.json();
+            const canEdit = ['gestor','admin','secretaria','equipe'].includes(currentUser?.tipo);
+            const isCidadao = currentUser?.tipo === 'cidadao';
+            const isResolvido = c.status === 'resolvido';
+
+            document.getElementById('modal-body').innerHTML = `
+                <div class="detail-grid">
+                    <div class="detail-item"><label>Protocolo</label><p>${c.protocolo}</p></div>
+                    <div class="detail-item"><label>Status</label><p><span class="badge ${c.status}">${c.status.replace('_',' ')}</span></p></div>
+                    <div class="detail-item"><label>Categoria</label><p>${c.categoria?.nome||'—'}</p></div>
+                    <div class="detail-item"><label>Prioridade</label><p><span class="badge ${c.prioridade}">${c.prioridade}</span></p></div>
+                    <div class="detail-item"><label>Bairro</label><p>${c.bairro?.nome||'—'}</p></div>
+                    <div class="detail-item"><label>Cidadão</label><p>${c.usuario?.nome||'—'}</p></div>
+                </div>
+                <div style="margin-bottom:16px;"><strong>Descrição:</strong><p style="margin-top:6px;color:var(--text-secondary);">${c.descricao}</p></div>
+                ${c.foto_url ? `<img src="${c.foto_url}" style="width:100%;border-radius:8px;margin-bottom:16px;max-height:260px;object-fit:cover;">` : ''}
+                <div id="comentarios-${c.id}"></div>
+                ${canEdit ? `
+                <div class="action-row">
+                    ${c.status !== 'em_andamento' ? `<button class="btn-action info" onclick="updateStatus(${c.id},'em_andamento')">Em Andamento</button>` : ''}
+                    ${c.status !== 'resolvido' ? `<button class="btn-action success" onclick="updateStatus(${c.id},'resolvido')">Resolvido</button>` : ''}
+                    ${c.status !== 'cancelado' ? `<button class="btn-action" onclick="updateStatus(${c.id},'cancelado')">Cancelar</button>` : ''}
+                    <button class="btn-action accent" onclick="abrirReclassificar(${c.id})">Reclassificar</button>
+                </div>` : ''}
+                ${isCidadao && isResolvido && !c.avaliacao ? `
+                <div style="margin-top:20px;padding-top:20px;border-top:1px solid var(--border);">
+                    <strong>Avaliar atendimento</strong>
+                    <div class="rating-stars" id="stars-${c.id}">
+                        ${[1,2,3,4,5].map(n => `<span class="star" data-nota="${n}" onclick="setStar(${c.id},${n})">&#11088;</span>`).join('')}
+                    </div>
+                    <textarea id="comment-${c.id}" placeholder="Comentário (opcional)" style="width:100%;padding:8px;border-radius:6px;border:1px solid var(--border);background:var(--bg-elevated);color:var(--text-primary);margin-top:8px;min-height:60px;"></textarea>
+                    <button class="btn-action success" style="margin-top:8px;" onclick="enviarAvaliacao(${c.id})">Enviar avaliação</button>
+                </div>` : ''}
+                ${c.avaliacao ? `<div style="margin-top:16px;padding:12px;background:var(--accent-dim);border-radius:8px;"><strong>⭐ Avaliado: ${c.avaliacao}/5</strong>${c.comentario_avaliacao ? `<p style="margin:4px 0 0;font-size:0.85rem;">${c.comentario_avaliacao}</p>` : ''}</div>` : ''}`;
+
+            document.getElementById('modal-detalhes').classList.add('active');
+            if (typeof carregarComentarios === 'function') carregarComentarios(c.id);
+        } catch(e) {} finally { hideLoading(); }
+    }
+
+    function setStar(id, nota) {
+        document.querySelectorAll(`#stars-${id} .star`).forEach((s, i) => s.classList.toggle('filled', i < nota));
+        document.querySelector(`#stars-${id}`).dataset.nota = nota;
+    }
+
+    async function enviarAvaliacao(id) {
+        const nota = parseInt(document.querySelector(`#stars-${id}`).dataset.nota || '0');
+        if (!nota) { showToast('Selecione uma nota', 'warning'); return; }
+        const comentario = document.getElementById(`comment-${id}`).value;
+        try {
+            const r = await apiRequest(`/chamados/${id}/avaliar`, { method:'POST', body: JSON.stringify({ nota, comentario_avaliacao: comentario }) });
+            if (r.ok) { showToast('Avaliação enviada!'); closeModal(); loadChamados(); }
+            else { const e = await r.json(); showToast(e.detail||'Erro', 'error'); }
+        } catch(e) {}
+    }
+
+    async function updateStatus(id, status) {
+        try {
+            const r = await apiRequest(`/chamados/${id}/status`, { method:'PUT', body: JSON.stringify({ status }) });
+            if (r.ok) { showToast('Status atualizado!'); closeModal(); loadChamados(); }
+        } catch(e) {}
+    }
+
+    function closeModal() { document.getElementById('modal-detalhes').classList.remove('active'); }
+
+    async function loadDashboard() {
+        try {
+            const r = await apiRequest('/relatorios/dashboard');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('stat-total').textContent     = d.total || 0;
+            document.getElementById('stat-andamento').textContent = d.em_andamento || 0;
+            document.getElementById('stat-resolvidos').textContent= d.resolvidos || 0;
+            document.getElementById('stat-avaliacao').textContent  = d.avaliacao_media ? d.avaliacao_media.toFixed(1) + '⭐' : '—';
+            document.getElementById('stat-tempo-medio').textContent= d.tempo_medio_horas ? `${Math.round(d.tempo_medio_horas)}h` : '—';
+            const bar = (v, max) => `<div class="chart-item"><div class="chart-item-label"><span>${v.nome}</span><strong>${v.total}</strong></div><div class="chart-bar-bg"><div class="chart-bar-fill" style="width:${max?Math.round(v.total/max*100):0}%"></div></div></div>`;
+            if (d.por_categoria?.length) {
+                const mx = d.por_categoria[0].total;
+                document.getElementById('chart-categorias').innerHTML = d.por_categoria.slice(0,6).map(v => bar(v, mx)).join('');
+            }
+            if (d.por_bairro?.length) {
+                const mx = d.por_bairro[0].total;
+                document.getElementById('chart-bairros').innerHTML = d.por_bairro.slice(0,6).map(v => bar(v, mx)).join('');
+            }
+        } catch(e) {}
+    }
+
+    async function carregarMapa() {
+        const status = document.getElementById('mapa-status')?.value || '';
+        const dias   = document.getElementById('mapa-dias')?.value || 30;
+        try {
+            let url = `/geo/mapa-calor?dias=${dias}`;
+            if (status) url += `&status=${status}`;
+            const r = await apiRequest(url);
+            const d = await r.json();
+            document.getElementById('mapa-total').textContent = `${d.total} ocorrências`;
+            if (!window._mapaCalor) {
+                window._mapaCalor = L.map('mapa-calor').setView([-1.4558, -48.4902], 12);
+                L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(window._mapaCalor);
+            }
+            if (window._heatLayer) window._mapaCalor.removeLayer(window._heatLayer);
+            const pts = d.pontos.map(p => [p.latitude, p.longitude, p.intensidade || 1]);
+            window._heatLayer = L.heatLayer(pts, { radius:25, blur:15, maxZoom:17 }).addTo(window._mapaCalor);
+        } catch(e) {}
+    }
+
+    async function carregarClusters() {
+        try {
+            const r = await apiRequest('/geo/clusters?raio_km=0.5&min_chamados=2');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('clusters-lista').innerHTML = d.clusters.map(cl =>
+                `<div class="card" style="padding:14px;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+                        <strong>${cl.total} chamados próximos</strong>
+                        <span class="badge ${cl.prioridade_dominante}">${cl.prioridade_dominante}</span>
+                    </div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">Centro: ${cl.centro_lat.toFixed(4)}, ${cl.centro_lon.toFixed(4)} • Raio ≈20${cl.raio_m}m</div>
+                    <div style="margin-top:8px;font-size:0.8rem;">${cl.categorias_dominantes.join(', ')}</div>
+                </div>`
+            ).join('') || '<div class="empty-state"><div class="empty-icon">🔍</div><p>Sem agrupamentos identificados</p></div>';
+        } catch(e) {}
+    }
+
+    async function carregarClima() {
+        try {
+            const r = await apiRequest('/integracoes/clima/alertas');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('clima-lista').innerHTML = d.alertas?.map(a =>
+                `<div class="card" style="padding:14px;border-left:3px solid var(--warn);">
+                    <div style="font-weight:600;">${a.tipo} — ${a.bairro||'Belém geral'}</div>
+                    <div style="font-size:0.8rem;color:var(--text-muted);">${a.descricao}</div>
+                </div>`
+            ).join('') || '<div class="empty-state"><div class="empty-icon">☀️</div><p>Sem alertas climáticos ativos</p></div>';
+        } catch(e) {}
+    }
+
+    async function carregarRelatorio() {
+        try {
+            const r = await fetch(window.location.origin + '/api/publico/relatorio-transparencia');
+            if (!r.ok) return;
+            const d = await r.json();
+            document.getElementById('relatorio-conteudo').innerHTML = `
+                <div class="stats-grid">
+                    <div class="stat-card teal"><div class="stat-label">Total de Chamados</div><div class="stat-value">${d.resumo?.total||0}</div></div>
+                    <div class="stat-card success"><div class="stat-label">Taxa de Resolução</div><div class="stat-value">${d.resumo?.taxa_resolucao||0}%</div></div>
+                    <div class="stat-card blue"><div class="stat-label">Avaliação Média</div><div class="stat-value">${d.resumo?.avaliacao_media||'—'}</div></div>
+                </div>`;
+        } catch(e) {}
+    }
+
+    async function toggleVoz() {
+        const btn = document.getElementById('voice-btn');
+        if (!('webkitSpeechRecognition' in window || 'SpeechRecognition' in window)) { showToast('Reconhecimento de voz não suportado', 'warning'); return; }
+        const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (btn.classList.contains('recording')) { btn.classList.remove('recording'); document.getElementById('voice-label').textContent = 'Ditar descrição por voz'; return; }
+        const rec = new SR(); rec.lang = 'pt-BR'; rec.continuous = true; rec.interimResults = true;
+        btn.classList.add('recording'); document.getElementById('voice-label').textContent = '🔴 Gravando... Clique para parar';
+        rec.onresult = e => { document.getElementById('descricao').value = Array.from(e.results).map(r => r[0].transcript).join(''); };
+        rec.onend = () => { btn.classList.remove('recording'); document.getElementById('voice-label').textContent = 'Ditar descrição por voz'; };
+        rec.start();
+    }
+
+    // Auto-login se token salvo
+    const savedToken = localStorage.getItem('token');
+    const savedUser  = localStorage.getItem('user');
+    if (savedToken && savedUser) {
+        try {
+            currentUser = JSON.parse(savedUser);
+            loadMainApp();
+        } catch(e) { localStorage.clear(); }
+    }
+
+</script>
+</body>
+</html>
