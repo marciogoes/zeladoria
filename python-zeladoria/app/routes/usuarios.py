@@ -159,10 +159,11 @@ def resumo_usuarios(
 ):
     """Resumo de usuários por tipo e status para o painel admin."""
     from sqlalchemy import func
+
+    # Corrigido: db.bind foi removido no SQLAlchemy 2.x — query direta sem cast
     por_tipo = db.query(
         Usuario.tipo,
         func.count(Usuario.id).label("total"),
-        func.sum(Usuario.ativo.cast(db.bind.dialect.name == "sqlite" and "INTEGER" or "INTEGER")).label("ativos"),
     ).group_by(Usuario.tipo).all()
 
     total_geral = db.query(func.count(Usuario.id)).scalar() or 0
@@ -174,6 +175,6 @@ def resumo_usuarios(
         "inativos": total_geral - total_ativos,
         "por_tipo": [
             {"tipo": t, "total": total}
-            for t, total, _ in por_tipo
+            for t, total in por_tipo
         ],
     }

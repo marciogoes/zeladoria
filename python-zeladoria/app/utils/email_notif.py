@@ -14,10 +14,11 @@ from typing import Optional
 logger = logging.getLogger("zelo.email")
 
 # Configuração via variáveis de ambiente
-EMAIL_HOST     = os.environ.get("EMAIL_HOST", "")
-EMAIL_PORT     = int(os.environ.get("EMAIL_PORT", "587"))
-EMAIL_USER     = os.environ.get("EMAIL_USER", "")
-EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD", "")
+# Aceita SMTP_* (padrão .env) e EMAIL_* (legado) — prioridade: SMTP_*
+EMAIL_HOST     = os.environ.get("SMTP_HOST") or os.environ.get("EMAIL_HOST", "")
+EMAIL_PORT     = int(os.environ.get("SMTP_PORT") or os.environ.get("EMAIL_PORT", "587"))
+EMAIL_USER     = os.environ.get("SMTP_USER") or os.environ.get("EMAIL_USER", "")
+EMAIL_PASSWORD = os.environ.get("SMTP_PASSWORD") or os.environ.get("EMAIL_PASSWORD", "")
 EMAIL_FROM     = os.environ.get("EMAIL_FROM", EMAIL_USER or "noreply@belem.pa.gov.br")
 EMAIL_FROM_NAME = os.environ.get("EMAIL_FROM_NAME", "Zelô — Zeladoria Urbana de Belém")
 

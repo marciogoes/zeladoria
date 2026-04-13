@@ -1,12 +1,29 @@
 """
-Sprint 17 — Rate Limiting em memória
+Sprint 17 — Rate Limiting em memória (sliding window)
 Proteção anti-brute-force para rotas de autenticação.
-Em produção com múltiplos workers, use Redis (slowapi + redis backend).
+
+AVISO: implementação em memória — funciona corretamente apenas com 1 worker.
+Em produção com múltiplos workers (gunicorn -w N), cada processo tem seu
+próprio _store, então o limite efetivo é N × max_attempts.
+Migração para Redis: use slowapi + Redis backend e defina REDIS_URL no ambiente.
 """
+import os
+import logging
 import time
 from collections import defaultdict
 from threading import Lock
 from fastapi import HTTPException, Request
+
+logger = logging.getLogger("zelo.rate_limit")
+
+# Avisa em startup se rodando com múltiplos workers (Railway/Gunicorn)
+_WORKERS = int(os.environ.get("WEB_CONCURRENCY", "1"))
+if _WORKERS > 1:
+    logger.warning(
+        f"Rate limiting em memória ativo com {_WORKERS} workers. "
+        "O limite efetivo será multiplicado pelo número de workers. "
+        "Considere migrar para Redis (REDIS_URL + slowapi)."
+    )
 
 # Estrutura: key -> lista de timestamps de tentativas
 _store: dict[str, list[float]] = defaultdict(list)
