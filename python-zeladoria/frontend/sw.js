@@ -1,7 +1,6 @@
-const CACHE_NAME = 'zelo-v4';
+const CACHE_NAME = 'zelo-v5';
 const STATIC_ASSETS = ['/app', '/manifest.json'];
 
-// ── Instalação ─────────────────────────────────────────
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -11,7 +10,6 @@ self.addEventListener('install', event => {
     self.skipWaiting();
 });
 
-// ── Ativação (limpa caches antigos) ────────────────────
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -23,9 +21,14 @@ self.addEventListener('activate', event => {
     self.clients.claim();
 });
 
-// ── Fetch strategy ─────────────────────────────────────
 self.addEventListener('fetch', event => {
     const url = new URL(event.request.url);
+
+    // Não cacheia rotas de autenticação (token pode mudar)
+    if (url.pathname.startsWith('/api/auth/')) {
+        event.respondWith(fetch(event.request));
+        return;
+    }
 
     // API — network first, cache como fallback offline
     if (url.pathname.startsWith('/api/')) {
@@ -92,7 +95,7 @@ self.addEventListener('notificationclick', event => {
     );
 });
 
-// ── Background Sync (fila offline) ─────────────────────
+// ── Background Sync ─────────────────────────────────────
 self.addEventListener('sync', event => {
     if (event.tag === 'sync-chamados') {
         event.waitUntil(syncChamadosPendentes());
@@ -100,8 +103,6 @@ self.addEventListener('sync', event => {
 });
 
 async function syncChamadosPendentes() {
-    // Lê fila do IndexedDB (implementado no frontend)
-    // Esta função é chamada quando a conexão é restaurada
     const clients_list = await clients.matchAll();
     clients_list.forEach(c => c.postMessage({ type: 'SYNC_COMPLETE' }));
 }
