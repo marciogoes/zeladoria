@@ -4,7 +4,7 @@ Triagem automática, análise de foto, previsão de demanda, relatório mensal
 """
 import os
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -142,6 +142,76 @@ def feedback_triagem(
     log.aceita = aceita
     db.commit()
     return {"log_id": log_id, "aceita": aceita}
+
+
+class AceiteTriagemPayload(BaseModel):
+    categoria_id: Optional[int] = None
+    prioridade: Optional[str] = None
+    secretaria_id: Optional[int] = None
+
+
+@router.post("/triar/{log_id}/aceitar")
+def aceitar_triagem_e_aplicar(
+    log_id: int,
+    payload: AceiteTriagemPayload,
+    current_user: Usuario = Depends(require_role("admin", "gestor", "secretaria")),
+    db: Session = Depends(get_db),
+):
+    """
+    Aceita a sugestão da triagem IA e aplica as alterações ao chamado.
+    Persiste categoria, prioridade e secretaria_id no chamado.
+    """
+    from app.models.historico import registrar_historico
+
+    log = db.query(LogTriagemIA).filter_by(id=log_id).first()
+    if not log:
+        raise HTTPException(404, "Log de triagem não encontrado")
+    if not log.chamado_id:
+        raise HTTPException(400, "Este log de triagem não está vinculado a um chamado")
+
+    chamado = db.query(Chamado).filter_by(id=log.chamado_id).first()
+    if not chamado:
+        raise HTTPException(404, "Chamado vinculado não encontrado")
+
+    alteracoes = []
+
+    if payload.categoria_id and payload.categoria_id != chamado.categoria_id:
+        registrar_historico(
+            db, chamado.id, "reclassificacao",
+            chamado.categoria.nome if chamado.categoria else None,
+            log.categoria_sugerida,
+            current_user.id,
+            f"Aceite de triagem IA (log #{log_id}) | confianca={log.confianca}",
+        )
+        chamado.categoria_id = payload.categoria_id
+        alteracoes.append("categoria")
+
+    if payload.prioridade and payload.prioridade != chamado.prioridade:
+        registrar_historico(
+            db, chamado.id, "prioridade",
+            chamado.prioridade, payload.prioridade,
+            current_user.id,
+            f"Prioridade ajustada pela triagem IA (log #{log_id})",
+        )
+        chamado.prioridade = payload.prioridade
+        alteracoes.append("prioridade")
+
+    if payload.secretaria_id is not None:
+        chamado.secretaria_id = payload.secretaria_id
+        alteracoes.append("secretaria")
+
+    chamado.updated_at = datetime.now(timezone.utc)
+    log.aceita = True
+    db.commit()
+    db.refresh(chamado)
+
+    return {
+        "log_id": log_id,
+        "chamado_id": chamado.id,
+        "aceita": True,
+        "alteracoes_aplicadas": alteracoes,
+        "protocolo": chamado.protocolo,
+    }
 
 
 @router.get("/triagem/metricas")

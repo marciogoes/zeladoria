@@ -7,6 +7,7 @@ import os, logging
 
 from app.database.database import engine, Base, SessionLocal
 from app.models.historico import ChamadoHistorico  # Sprint 17 — garante criação da tabela
+from app.models.push_subscription import PushSubscription  # Sprint 15 — persistência de push subscriptions
 from app.routes import auth, chamados, categorias, bairros, usuarios, relatorios, secretarias, comentarios
 # inovacoes.py descontinuado — migrado para geo_router.py e ia_router.py (sprints 9-12)
 from app.routers.servicos_router import router as servicos_router

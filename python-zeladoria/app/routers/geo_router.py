@@ -4,7 +4,7 @@ Mapa de calor em tempo real, clustering, rastreamento GPS equipes, alertas clima
 """
 import os, math, httpx
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
@@ -113,7 +113,10 @@ def agrupar_chamados(
     """
     Agrupa chamados geograficamente usando DBSCAN simplificado.
     Clusters com 2+ chamados viram sugestões de Ordem de Serviço.
+    AVISO: algoritmo O(n²) — limitado a 500 chamados por chamada para evitar timeout.
     """
+    _LIMITE_CLUSTERING = 500
+
     query = db.query(Chamado).filter(
         Chamado.latitude.isnot(None),
         Chamado.longitude.isnot(None),
@@ -121,7 +124,16 @@ def agrupar_chamados(
     if apenas_abertos:
         query = query.filter(Chamado.status.in_(["aberto", "em_andamento"]))
 
-    chamados = query.all()
+    total_disponiveis = query.count()
+    chamados = query.order_by(Chamado.prioridade.desc()).limit(_LIMITE_CLUSTERING).all()
+
+    aviso = None
+    if total_disponiveis > _LIMITE_CLUSTERING:
+        aviso = (
+            f"Exibindo os {_LIMITE_CLUSTERING} chamados de maior prioridade "
+            f"(total disponível: {total_disponiveis}). "
+            "Para processar todos, use exportação CSV e clustering offline."
+        )
 
     visitados: set = set()
     clusters: list = []
@@ -177,6 +189,7 @@ def agrupar_chamados(
         "total_clusters": len(clusters),
         "total_chamados_agrupados": sum(c["total"] for c in clusters),
         "economia_total_min": sum(c["economia_min"] for c in clusters),
+        "aviso": aviso,
     }
 
 

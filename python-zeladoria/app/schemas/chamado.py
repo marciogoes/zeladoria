@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 from typing import Optional
 from datetime import datetime
 from app.schemas.usuario import UsuarioResponse
@@ -21,9 +21,10 @@ class ChamadoUpdate(BaseModel):
     status: Optional[str] = None
     prioridade: Optional[str] = None
     responsavel_id: Optional[int] = None
+    secretaria_id: Optional[int] = None
 
 class ChamadoAvaliar(BaseModel):
-    avaliacao: int
+    avaliacao: int = Field(..., ge=1, le=5, description="Nota de 1 a 5")
     comentario_avaliacao: Optional[str] = None
 
 class ChamadoResponse(ChamadoBase):
@@ -43,6 +44,9 @@ class ChamadoResponse(ChamadoBase):
     
     # Votos
     total_votos: Optional[int] = 0
+
+    # Secretaria responsável (Sprint 19)
+    secretaria_id: Optional[int] = None
 
     # Relacionamentos
     usuario: Optional[UsuarioResponse] = None

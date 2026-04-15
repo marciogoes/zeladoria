@@ -4,7 +4,7 @@ Geoespacial + IA + Rastreamento
 """
 from sqlalchemy import Column, Integer, String, Float, Boolean, DateTime, ForeignKey, Text, JSON
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.database import Base
 
 
@@ -25,7 +25,7 @@ class EquipeLocalizacao(Base):
     bateria     = Column(Integer)               # % bateria do dispositivo
     em_servico  = Column(Boolean, default=True)
     chamado_id  = Column(Integer, ForeignKey("chamados.id"))  # chamado em atendimento
-    registrado_em = Column(DateTime, default=datetime.utcnow)
+    registrado_em = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     usuario     = relationship("Usuario")
     chamado     = relationship("Chamado")
@@ -46,7 +46,7 @@ class OrdemServico(Base):
     equipe_id       = Column(Integer, ForeignKey("usuarios.id"))
     status          = Column(String, default="pendente")  # pendente, em_andamento, concluida
     prioridade      = Column(String, default="media")
-    criado_em       = Column(DateTime, default=datetime.utcnow)
+    criado_em       = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     iniciado_em     = Column(DateTime)
     concluido_em    = Column(DateTime)
 
@@ -70,7 +70,7 @@ class LogTriagemIA(Base):
     confianca           = Column(Float)        # 0.0 - 1.0
     aceita              = Column(Boolean)      # gestor aceitou a sugestão?
     modelo              = Column(String, default="regras")  # regras | llm
-    criado_em           = Column(DateTime, default=datetime.utcnow)
+    criado_em           = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     chamado             = relationship("Chamado")
 
@@ -87,7 +87,7 @@ class PrevisaoDemanda(Base):
     previsao        = Column(Integer)   # chamados esperados
     realizado       = Column(Integer)   # chamados reais (preenchido depois)
     modelo_versao   = Column(String, default="ma4")  # moving average 4 semanas
-    gerado_em       = Column(DateTime, default=datetime.utcnow)
+    gerado_em       = Column(DateTime, default=lambda: datetime.now(timezone.utc))
 
     bairro          = relationship("Bairro")
 
@@ -101,5 +101,5 @@ class RelatorioMensal(Base):
     mes             = Column(Integer, nullable=False)
     dados           = Column(JSON)          # snapshot completo dos dados
     arquivo_path    = Column(String)        # caminho do PDF gerado
-    gerado_em       = Column(DateTime, default=datetime.utcnow)
+    gerado_em       = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     gerado_por      = Column(String, default="scheduler")

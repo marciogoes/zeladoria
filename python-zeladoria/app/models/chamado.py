@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, Float, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
-import random
+from datetime import datetime, timezone
+import uuid
 from app.database.database import Base
 
 class Chamado(Base):
@@ -21,8 +21,8 @@ class Chamado(Base):
     avaliacao = Column(Integer)
     comentario_avaliacao = Column(Text)
     data_resolucao = Column(DateTime)
-    created_at = Column(DateTime, default=datetime.utcnow)
-    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
 
     # Foreign Keys
     usuario_id = Column(Integer, ForeignKey("usuarios.id"), nullable=False)
@@ -33,17 +33,20 @@ class Chamado(Base):
     # Votos (Sprint 3)
     total_votos = Column(Integer, default=0)
 
+    # Secretaria responsável (Sprint 19) — preenchida pela triagem IA ou gestor
+    secretaria_id = Column(Integer, ForeignKey("secretarias.id"), nullable=True)
+
     # Relacionamentos
     usuario = relationship("Usuario", back_populates="chamados", foreign_keys=[usuario_id])
     responsavel = relationship("Usuario", back_populates="chamados_responsavel", foreign_keys=[responsavel_id])
     categoria = relationship("Categoria", back_populates="chamados")
     bairro = relationship("Bairro", back_populates="chamados")
+    secretaria = relationship("Secretaria", foreign_keys=[secretaria_id])
     comentarios = relationship("Comentario", back_populates="chamado", cascade="all, delete-orphan")
     votos = relationship("VotoChamado", back_populates="chamado", cascade="all, delete-orphan")
 
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         if not self.protocolo:
-            timestamp = int(datetime.now().timestamp())
-            random_num = random.randint(100, 999)
-            self.protocolo = f"BEL{timestamp}{random_num}"
+            # UUID v4 truncado: BEL + 10 chars hex → colisão praticamente impossível
+            self.protocolo = "BEL" + uuid.uuid4().hex[:10].upper()

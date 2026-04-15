@@ -2,7 +2,7 @@
 Sprint 15 — Scheduler Estendido
 Adiciona: relatório mensal automático + backup + limpeza de dados antigos
 """
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from apscheduler.schedulers.background import BackgroundScheduler
 from apscheduler.triggers.interval import IntervalTrigger
 from apscheduler.triggers.cron import CronTrigger
@@ -20,7 +20,7 @@ def verificar_sla(db_factory):
 
     db = db_factory()
     try:
-        agora = datetime.utcnow()
+        agora = datetime.now(timezone.utc)
         chamados = db.query(Chamado).filter(
             Chamado.status.in_(["aberto", "em_andamento"])
         ).all()
@@ -64,7 +64,7 @@ def gerar_relatorio_mensal_auto(db_factory):
 
     db = db_factory()
     try:
-        agora = datetime.utcnow()
+        agora = datetime.now(timezone.utc)
         # Relatório do mês ANTERIOR
         if agora.month == 1:
             mes, ano = 12, agora.year - 1
@@ -130,7 +130,7 @@ def limpar_localizacoes_antigas(db_factory):
 
     db = db_factory()
     try:
-        limite = datetime.utcnow() - timedelta(days=7)
+        limite = datetime.now(timezone.utc) - timedelta(days=7)
         deletados = db.query(EquipeLocalizacao).filter(
             EquipeLocalizacao.registrado_em < limite
         ).delete()
@@ -154,10 +154,9 @@ def backup_banco(db_factory):
     try:
         backup_dir = Path("backups")
         backup_dir.mkdir(exist_ok=True)
-        ts = datetime.utcnow().strftime("%Y%m%d_%H%M")
+        ts = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M")
 
         if "sqlite" in db_url:
-            # SQLite — cópia direta
             src = db_url.replace("sqlite:///./", "").replace("sqlite:///", "")
             dst = backup_dir / f"zeladoria_backup_{ts}.db"
             if os.path.exists(src):
@@ -167,7 +166,6 @@ def backup_banco(db_factory):
             else:
                 logger.warning(f"Arquivo SQLite não encontrado: {src}")
         else:
-            # PostgreSQL — via subprocess pg_dump
             import subprocess
             dst = backup_dir / f"zeladoria_backup_{ts}.sql"
             result = subprocess.run(

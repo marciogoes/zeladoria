@@ -4,7 +4,7 @@ Trilha imutável de todas as mudanças de status, prioridade e responsável.
 """
 from sqlalchemy import Column, Integer, String, DateTime, ForeignKey, Text
 from sqlalchemy.orm import relationship
-from datetime import datetime
+from datetime import datetime, timezone
 from app.database.database import Base
 
 
@@ -22,7 +22,7 @@ class ChamadoHistorico(Base):
     valor_novo     = Column(String(100), nullable=False)
     observacao     = Column(Text)                          # e.g., "Reclassificado por triagem IA"
     usuario_id     = Column(Integer, ForeignKey("usuarios.id"))
-    criado_em      = Column(DateTime, default=datetime.utcnow, index=True)
+    criado_em      = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
     # Relacionamentos (back_populates definido dinamicamente para não circular)
     chamado = relationship("Chamado", foreign_keys=[chamado_id])

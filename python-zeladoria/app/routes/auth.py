@@ -1,9 +1,10 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
 from app.database.database import get_db
 from app.models.usuario import Usuario
 from app.schemas.usuario import UsuarioCreate, UsuarioResponse, UsuarioLogin, Token, UsuarioUpdate
-from app.utils.auth import create_access_token, get_current_user
+from app.utils.auth import create_access_token, get_current_user, revoke_token
 from app.utils.rate_limit import check_rate_limit, get_client_ip, reset_attempts
 
 router = APIRouter()
@@ -67,6 +68,19 @@ def login(
 
     access_token = create_access_token(data={"sub": str(usuario.id)})
     return {"access_token": access_token, "token_type": "bearer", "usuario": usuario}
+
+
+@router.post("/logout", status_code=status.HTTP_204_NO_CONTENT)
+def logout(
+    request: Request,
+    current_user: Usuario = Depends(get_current_user),
+):
+    """Revoga o token atual — logout real."""
+    auth_header = request.headers.get("Authorization", "")
+    if auth_header.startswith("Bearer "):
+        token = auth_header[len("Bearer "):].strip()
+        revoke_token(token)
+    return None
 
 
 @router.get("/me", response_model=UsuarioResponse)

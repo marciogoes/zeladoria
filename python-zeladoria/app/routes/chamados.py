@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, status, UploadFile, File,
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from typing import List, Optional
-from datetime import datetime, date
+from datetime import datetime, date, timezone
 from app.database.database import get_db
 from app.models.chamado import Chamado
 from app.models.usuario import Usuario
@@ -47,6 +47,73 @@ class ChamadosPaginados(BaseModel):
     items: List[ChamadoResponse]
 
     model_config = {"from_attributes": True}
+
+
+# ─── Export CSV ───────────────────────────────────────────────────────────────
+# NOTA: registrado ANTES de /{chamado_id} para evitar ambiguidade de rota
+
+@router.get("/export/csv")
+def exportar_csv(
+    status: Optional[str] = None,
+    prioridade: Optional[str] = None,
+    bairro_id: Optional[int] = None,
+    categoria_id: Optional[int] = None,
+    current_user: Usuario = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """
+    Exporta chamados para CSV — máximo 5.000 registros.
+    Apenas gestores, secretarias e admins.
+    """
+    if current_user.tipo not in ["gestor", "admin", "secretaria"]:
+        raise HTTPException(403, "Exportação disponível apenas para gestores e admins")
+
+    query = db.query(Chamado).order_by(Chamado.created_at.desc())
+    if status:
+        query = query.filter(Chamado.status == status)
+    if prioridade:
+        query = query.filter(Chamado.prioridade == prioridade)
+    if bairro_id:
+        query = query.filter(Chamado.bairro_id == bairro_id)
+    if categoria_id:
+        query = query.filter(Chamado.categoria_id == categoria_id)
+
+    chamados = query.limit(5000).all()
+
+    output = io.StringIO()
+    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
+
+    # Cabeçalho
+    writer.writerow([
+        "Protocolo", "Título", "Status", "Prioridade",
+        "Categoria", "Bairro", "Endereço", "Latitude", "Longitude",
+        "Avaliação", "Total Votos",
+        "Criado em", "Resolvido em",
+        "Responsável",
+    ])
+
+    # Dados
+    for c in chamados:
+        dt_criacao   = c.created_at.strftime("%d/%m/%Y %H:%M") if c.created_at else ""
+        dt_resolucao = c.data_resolucao.strftime("%d/%m/%Y %H:%M") if c.data_resolucao else ""
+        writer.writerow([
+            c.protocolo, c.titulo, c.status, c.prioridade,
+            c.categoria.nome if c.categoria else "",
+            c.bairro.nome if c.bairro else "",
+            c.endereco or "", c.latitude or "", c.longitude or "",
+            c.avaliacao or "", c.total_votos or 0,
+            dt_criacao, dt_resolucao,
+            c.responsavel.nome if c.responsavel else "",
+        ])
+
+    content = output.getvalue()
+    filename = f"chamados_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.csv"
+
+    return Response(
+        content=content.encode("utf-8-sig"),  # BOM para Excel reconhecer UTF-8
+        media_type="text/csv",
+        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+    )
 
 
 # ─── Listagem com paginação ───────────────────────────────────────────────────
@@ -93,11 +160,9 @@ def listar_chamados(
 
     # Sprint 18: Filtros de data
     if data_inicio:
-        from datetime import datetime as dt
-        query = query.filter(Chamado.created_at >= dt.combine(data_inicio, dt.min.time()))
+        query = query.filter(Chamado.created_at >= datetime.combine(data_inicio, datetime.min.time()))
     if data_fim:
-        from datetime import datetime as dt
-        query = query.filter(Chamado.created_at <= dt.combine(data_fim, dt.max.time()))
+        query = query.filter(Chamado.created_at <= datetime.combine(data_fim, datetime.max.time()))
 
     # Ordenação
     _ORDEM = {
@@ -217,7 +282,7 @@ async def atualizar_chamado(
         registrar_historico(db, chamado.id, "status", chamado.status, status, current_user.id)
         chamado.status = status
         if status == "resolvido":
-            chamado.data_resolucao = datetime.utcnow()
+            chamado.data_resolucao = datetime.now(timezone.utc)
 
     if prioridade and prioridade != chamado.prioridade:
         registrar_historico(db, chamado.id, "prioridade", chamado.prioridade, prioridade, current_user.id)
@@ -230,7 +295,7 @@ async def atualizar_chamado(
     if foto:
         chamado.foto_depois = await save_upload_file(foto)
 
-    chamado.updated_at = datetime.utcnow()
+    chamado.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(chamado)
     return chamado
@@ -252,6 +317,8 @@ def avaliar_chamado(
         raise HTTPException(403, "Sem permissão")
     if chamado.status != "resolvido":
         raise HTTPException(400, "Apenas chamados resolvidos podem ser avaliados")
+    if chamado.avaliacao is not None:
+        raise HTTPException(400, "Este chamado já foi avaliado e não pode ser avaliado novamente")
 
     registrar_historico(
         db, chamado.id, "avaliacao",
@@ -288,9 +355,9 @@ def atualizar_status(
         registrar_historico(db, chamado.id, "status", chamado.status, status_data.status, current_user.id)
         chamado.status = status_data.status
         if status_data.status == "resolvido":
-            chamado.data_resolucao = datetime.utcnow()
+            chamado.data_resolucao = datetime.now(timezone.utc)
 
-    chamado.updated_at = datetime.utcnow()
+    chamado.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(chamado)
 
@@ -319,7 +386,7 @@ def atualizar_prioridade(
         registrar_historico(db, chamado.id, "prioridade", chamado.prioridade, prioridade_data.prioridade, current_user.id)
         chamado.prioridade = prioridade_data.prioridade
 
-    chamado.updated_at = datetime.utcnow()
+    chamado.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(chamado)
     return chamado
@@ -356,7 +423,7 @@ def reclassificar_chamado(
     )
 
     chamado.prioridade = reclassificacao.prioridade
-    chamado.updated_at = datetime.utcnow()
+    chamado.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(chamado)
     return chamado
@@ -384,72 +451,6 @@ def historico_chamado(
         .all()
     )
     return [h.to_dict() for h in historico]
-
-
-# ─── Export CSV ───────────────────────────────────────────────────────────────
-
-@router.get("/export/csv")
-def exportar_csv(
-    status: Optional[str] = None,
-    prioridade: Optional[str] = None,
-    bairro_id: Optional[int] = None,
-    categoria_id: Optional[int] = None,
-    current_user: Usuario = Depends(get_current_user),
-    db: Session = Depends(get_db),
-):
-    """
-    Exporta chamados para CSV — máximo 5.000 registros.
-    Apenas gestores, secretarias e admins.
-    """
-    if current_user.tipo not in ["gestor", "admin", "secretaria"]:
-        raise HTTPException(403, "Exportação disponível apenas para gestores e admins")
-
-    query = db.query(Chamado).order_by(Chamado.created_at.desc())
-    if status:
-        query = query.filter(Chamado.status == status)
-    if prioridade:
-        query = query.filter(Chamado.prioridade == prioridade)
-    if bairro_id:
-        query = query.filter(Chamado.bairro_id == bairro_id)
-    if categoria_id:
-        query = query.filter(Chamado.categoria_id == categoria_id)
-
-    chamados = query.limit(5000).all()
-
-    output = io.StringIO()
-    writer = csv.writer(output, quoting=csv.QUOTE_ALL)
-
-    # Cabeçalho
-    writer.writerow([
-        "Protocolo", "Título", "Status", "Prioridade",
-        "Categoria", "Bairro", "Endereço", "Latitude", "Longitude",
-        "Avaliação", "Total Votos",
-        "Criado em", "Resolvido em",
-        "Responsável",
-    ])
-
-    # Dados
-    for c in chamados:
-        dt_criacao   = c.created_at.strftime("%d/%m/%Y %H:%M") if c.created_at else ""
-        dt_resolucao = c.data_resolucao.strftime("%d/%m/%Y %H:%M") if c.data_resolucao else ""
-        writer.writerow([
-            c.protocolo, c.titulo, c.status, c.prioridade,
-            c.categoria.nome if c.categoria else "",
-            c.bairro.nome if c.bairro else "",
-            c.endereco or "", c.latitude or "", c.longitude or "",
-            c.avaliacao or "", c.total_votos or 0,
-            dt_criacao, dt_resolucao,
-            c.responsavel.nome if c.responsavel else "",
-        ])
-
-    content = output.getvalue()
-    filename = f"chamados_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}.csv"
-
-    return Response(
-        content=content.encode("utf-8-sig"),  # BOM para Excel reconhecer UTF-8
-        media_type="text/csv",
-        headers={"Content-Disposition": f'attachment; filename="{filename}"'},
-    )
 
 
 # ─── Deletar ─────────────────────────────────────────────────────────────────

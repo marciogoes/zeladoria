@@ -68,6 +68,16 @@ local_settings.py
 db.sqlite3
 db.sqlite3-journal
 
+# ============================================
+# ARQUIVOS TEMPORÁRIOS / LIXO DE BUILD
+# ============================================
+_p1.dat
+_p1.b64
+_idx_p1.b64
+_idx_b64_p1.dat
+*.dat
+*.b64
+
 # Flask stuff:
 instance/
 .webassets-cache
