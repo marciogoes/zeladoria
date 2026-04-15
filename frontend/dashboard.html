@@ -1,0 +1,1050 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Zelô — Dashboard Executivo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --accent: #0099aa; --accent2: #2563eb; --dark: #0f172a;
+            --success: #059669; --warn: #d97706; --danger: #dc2626;
+            --bg: #f0f4f8; --surface: #ffffff; --card: #ffffff;
+            --border: rgba(0,0,0,0.07); --text: #0f172a;
+            --text-muted: #64748b; --radius: 12px;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; }
+
+        /* ── HEADER ── */
+        .topbar {
+            background: linear-gradient(135deg, var(--dark) 0%, #1e3a5f 100%);
+            padding: 0 28px; display: flex; align-items: center;
+            justify-content: space-between; height: 60px; position: sticky; top: 0; z-index: 100;
+        }
+        .topbar-brand { font-family: 'Syne', sans-serif; font-size: 1.2rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; }
+        .topbar-brand span { color: #5eead4; }
+        .topbar-right { display: flex; align-items: center; gap: 16px; }
+        .topbar-right .user-name { font-size: 0.85rem; color: rgba(255,255,255,.75); }
+        .btn-logout { background: rgba(255,255,255,.12); border: none; color: rgba(255,255,255,.8); padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.82rem; transition: background .15s; }
+        .btn-logout:hover { background: rgba(255,255,255,.2); }
+        .badge-role { background: rgba(0,153,170,.3); color: #5eead4; padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+
+        /* ── NAV TABS ── */
+        .tab-bar { background: var(--surface); border-bottom: 1px solid var(--border); padding: 0 28px; display: flex; gap: 4px; overflow-x: auto; }
+        .tab-btn { padding: 14px 18px; border: none; background: transparent; cursor: pointer; font-size: 0.875rem; font-weight: 500; color: var(--text-muted); border-bottom: 2px solid transparent; white-space: nowrap; transition: all .15s; }
+        .tab-btn:hover { color: var(--accent); }
+        .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+
+        /* ── LAYOUT ── */
+        .page { display: none; padding: 24px 28px; max-width: 1400px; margin: 0 auto; }
+        .page.active { display: block; }
+
+        /* ── CARDS ── */
+        .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 14px; margin-bottom: 24px; }
+        .kpi { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 18px 20px; position: relative; overflow: hidden; }
+        .kpi::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; }
+        .kpi.teal::before { background: var(--accent); }
+        .kpi.blue::before { background: var(--accent2); }
+        .kpi.green::before { background: var(--success); }
+        .kpi.warn::before { background: var(--warn); }
+        .kpi.red::before { background: var(--danger); }
+        .kpi-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: .06em; color: var(--text-muted); margin-bottom: 6px; }
+        .kpi-value { font-family: 'Syne', sans-serif; font-size: 2.2rem; font-weight: 800; color: var(--dark); line-height: 1; }
+        .kpi-sub { font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; }
+        .kpi-trend { font-size: 0.75rem; margin-top: 4px; }
+        .kpi-trend.up { color: var(--success); }
+        .kpi-trend.down { color: var(--danger); }
+
+        /* ── PANEL ── */
+        .panel { background: var(--card); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 20px; margin-bottom: 20px; }
+        .panel-title { font-family: 'Syne', sans-serif; font-size: 0.875rem; font-weight: 700; color: var(--dark); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+        .grid-2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; margin-bottom: 20px; }
+        .grid-3 { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; margin-bottom: 20px; }
+
+        /* ── BAR CHART INLINE ── */
+        .bar-item { display: flex; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+        .bar-item:last-child { border-bottom: none; }
+        .bar-label { font-size: 0.82rem; min-width: 120px; color: var(--text); }
+        .bar-track { flex: 1; height: 6px; background: var(--bg); border-radius: 3px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width .6s ease; }
+        .bar-count { font-size: 0.78rem; font-weight: 600; color: var(--dark); min-width: 36px; text-align: right; }
+
+        /* ── STATUS BADGE ── */
+        .badge { display: inline-block; padding: 2px 9px; border-radius: 12px; font-size: 0.72rem; font-weight: 600; }
+        .badge.aberto { background: #dbeafe; color: #1e40af; }
+        .badge.em_andamento { background: #fef3c7; color: #92400e; }
+        .badge.resolvido { background: #d1fae5; color: #065f46; }
+        .badge.cancelado { background: #fee2e2; color: #991b1b; }
+
+        /* ── TABLE ── */
+        .data-table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+        .data-table th { text-align: left; padding: 8px 12px; background: var(--bg); font-size: 0.72rem; text-transform: uppercase; letter-spacing: .05em; color: var(--text-muted); border-bottom: 1px solid var(--border); }
+        .data-table td { padding: 10px 12px; border-bottom: 0.5px solid var(--border); vertical-align: middle; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .data-table tr:hover td { background: var(--bg); }
+
+        /* ── FILTERS ── */
+        .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; align-items: center; }
+        .filters select, .filters input { padding: 8px 12px; border: 0.5px solid var(--border); border-radius: 8px; font-size: 0.82rem; background: var(--surface); color: var(--text); }
+        .btn { padding: 8px 18px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.82rem; font-weight: 600; transition: all .15s; }
+        .btn-primary { background: var(--accent); color: #fff; }
+        .btn-primary:hover { background: #007a8a; }
+        .btn-secondary { background: var(--bg); border: 0.5px solid var(--border); color: var(--text); }
+        .btn-secondary:hover { background: #e2e8f0; }
+
+        /* ── PROGRESS CIRCLE ── */
+        .score-ring { width: 80px; height: 80px; }
+
+        /* ── EMPTY ── */
+        .empty { text-align: center; padding: 32px; color: var(--text-muted); font-size: 0.85rem; }
+
+        /* ── LOADING ── */
+        .skeleton { background: linear-gradient(90deg, var(--bg) 25%, #e2e8f0 50%, var(--bg) 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; height: 16px; border-radius: 4px; margin-bottom: 8px; }
+        @keyframes shimmer { from { background-position: 200% 0; } to { background-position: -200% 0; } }
+
+        /* ── SECRETARIA SCORE ── */
+        .sec-row { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 0.5px solid var(--border); }
+        .sec-row:last-child { border-bottom: none; }
+        .sec-rank { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.1rem; min-width: 28px; color: var(--text-muted); }
+        .sec-rank.top { color: var(--accent); }
+        .sec-name { flex: 1; font-size: 0.85rem; font-weight: 500; }
+        .sec-score { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.1rem; color: var(--accent); }
+        .sec-alert { font-size: 0.68rem; color: var(--danger); }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 768px) {
+            .page { padding: 16px; }
+            .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+            .grid-2, .grid-3 { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ── TOPBAR ── -->
+<div class="topbar">
+    <div class="topbar-brand">🏛️ Zel<span>ô</span> — Dashboard</div>
+    <div class="topbar-right">
+        <span class="badge-role" id="role-badge">Gestor</span>
+        <span class="user-name" id="user-name">Carregando...</span>
+        <button class="btn-logout" onclick="logout()">Sair</button>
+    </div>
+</div>
+
+<!-- ── TAB BAR ── -->
+<div class="tab-bar">
+    <button class="tab-btn active" data-tab="visao-geral">📊 Visão Geral</button>
+    <button class="tab-btn" data-tab="chamados">📋 Chamados</button>
+    <button class="tab-btn" data-tab="sla">⏱️ SLA & Tempo</button>
+    <button class="tab-btn" data-tab="secretarias">🏛️ Secretarias</button>
+    <button class="tab-btn" data-tab="reincidencias">🔁 Reincidências</button>
+    <button class="tab-btn" data-tab="sentimento">😊 Sentimento</button>
+    <button class="tab-btn" data-tab="heatmap">🕐 Heatmap Temporal</button>
+    <button class="tab-btn" data-tab="relatorios">📄 Relatórios</button>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 1: VISÃO GERAL
+════════════════════════════════════════ -->
+<div class="page active" id="page-visao-geral">
+
+    <div class="kpi-grid">
+        <div class="kpi teal">
+            <div class="kpi-label">Total de chamados</div>
+            <div class="kpi-value" id="kpi-total">—</div>
+            <div class="kpi-sub" id="kpi-total-sub">histórico completo</div>
+        </div>
+        <div class="kpi blue">
+            <div class="kpi-label">Abertos</div>
+            <div class="kpi-value" id="kpi-abertos">—</div>
+            <div class="kpi-sub">aguardando atendimento</div>
+        </div>
+        <div class="kpi warn">
+            <div class="kpi-label">Em andamento</div>
+            <div class="kpi-value" id="kpi-andamento">—</div>
+            <div class="kpi-sub">em atendimento</div>
+        </div>
+        <div class="kpi green">
+            <div class="kpi-label">Resolvidos</div>
+            <div class="kpi-value" id="kpi-resolvidos">—</div>
+            <div class="kpi-sub" id="kpi-taxa">taxa: —%</div>
+        </div>
+        <div class="kpi teal">
+            <div class="kpi-label">Avaliação média</div>
+            <div class="kpi-value" id="kpi-avaliacao">—</div>
+            <div class="kpi-sub">nota dos cidadãos (1–5)</div>
+        </div>
+        <div class="kpi blue">
+            <div class="kpi-label">Tempo médio resolução</div>
+            <div class="kpi-value" id="kpi-tempo">—</div>
+            <div class="kpi-sub">chamados resolvidos</div>
+        </div>
+        <div class="kpi green">
+            <div class="kpi-label">Resolvidos este mês</div>
+            <div class="kpi-value" id="kpi-mes-resolvidos">—</div>
+            <div class="kpi-sub" id="kpi-mes-taxa">taxa: —%</div>
+        </div>
+        <div class="kpi warn">
+            <div class="kpi-label">Críticos em aberto</div>
+            <div class="kpi-value" id="kpi-criticos">—</div>
+            <div class="kpi-sub">prioridade crítica</div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">📌 Top 5 categorias</div>
+            <div id="chart-categorias"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">🏘️ Top 5 bairros</div>
+            <div id="chart-bairros"></div>
+        </div>
+    </div>
+
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">📊 Distribuição por status</div>
+            <canvas id="chart-status" height="180"></canvas>
+        </div>
+        <div class="panel">
+            <div class="panel-title">🎯 Distribuição por prioridade</div>
+            <canvas id="chart-prioridade" height="180"></canvas>
+        </div>
+    </div>
+
+    <div class="panel">
+        <div class="panel-title">🕑 Chamados recentes</div>
+        <div id="recentes-lista"><div class="skeleton"></div><div class="skeleton" style="width:70%"></div></div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 2: CHAMADOS
+════════════════════════════════════════ -->
+<div class="page" id="page-chamados">
+    <div class="filters">
+        <select id="f-status" onchange="loadChamadosDash()">
+            <option value="">Todos os status</option>
+            <option value="aberto">Aberto</option>
+            <option value="em_andamento">Em andamento</option>
+            <option value="resolvido">Resolvido</option>
+            <option value="cancelado">Cancelado</option>
+        </select>
+        <select id="f-prioridade" onchange="loadChamadosDash()">
+            <option value="">Todas as prioridades</option>
+            <option value="critica">Crítica</option>
+            <option value="alta">Alta</option>
+            <option value="media">Média</option>
+            <option value="baixa">Baixa</option>
+        </select>
+        <input type="text" id="f-busca" placeholder="Buscar protocolo ou título..." oninput="loadChamadosDash()" style="min-width:200px;">
+        <button class="btn btn-primary" onclick="exportarCSV()">💾 Exportar CSV</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden;">
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Protocolo</th>
+                    <th>Título</th>
+                    <th>Categoria</th>
+                    <th>Bairro</th>
+                    <th>Prioridade</th>
+                    <th>Status</th>
+                    <th>Criado em</th>
+                </tr>
+            </thead>
+            <tbody id="chamados-tbody">
+                <tr><td colspan="7"><div class="empty">Carregando...</div></td></tr>
+            </tbody>
+        </table>
+    </div>
+    <div id="chamados-pagination" style="display:flex;gap:8px;align-items:center;margin-top:12px;font-size:0.82rem;color:var(--text-muted);"></div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 3: SLA & TEMPO
+════════════════════════════════════════ -->
+<div class="page" id="page-sla">
+    <div class="kpi-grid" id="sla-kpis" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="kpi green"><div class="kpi-label">Resolvidos no prazo</div><div class="kpi-value" id="sla-ok">—</div></div>
+        <div class="kpi red"><div class="kpi-label">Atrasados</div><div class="kpi-value" id="sla-atrasados">—</div></div>
+        <div class="kpi warn"><div class="kpi-label">Vencendo hoje</div><div class="kpi-value" id="sla-hoje">—</div></div>
+        <div class="kpi teal"><div class="kpi-label">Taxa SLA cumprido</div><div class="kpi-value" id="sla-taxa">—%</div></div>
+        <div class="kpi blue"><div class="kpi-label">Tempo médio (h)</div><div class="kpi-value" id="sla-tempo">—</div></div>
+    </div>
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">⏱️ Tempo médio por categoria</div>
+            <div id="sla-categorias"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">🚨 Chamados com SLA vencido</div>
+            <div id="sla-vencidos-lista"></div>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title">📈 Evolução SLA por prioridade</div>
+        <canvas id="chart-sla-prioridade" height="160"></canvas>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 4: SECRETARIAS
+════════════════════════════════════════ -->
+<div class="page" id="page-secretarias">
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(200px,1fr));">
+        <div class="kpi teal"><div class="kpi-label">Melhor desempenho</div><div class="kpi-value" id="sec-melhor" style="font-size:1.1rem;">—</div></div>
+        <div class="kpi red"><div class="kpi-label">Precisa de atenção</div><div class="kpi-value" id="sec-pior" style="font-size:1.1rem;">—</div></div>
+        <div class="kpi blue"><div class="kpi-label">Com alertas ativos</div><div class="kpi-value" id="sec-alertas">—</div></div>
+    </div>
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">🏆 Ranking de performance</div>
+            <div id="sec-ranking"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">📊 Score por secretaria</div>
+            <canvas id="chart-secretarias" height="240"></canvas>
+        </div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 5: REINCIDÊNCIAS
+════════════════════════════════════════ -->
+<div class="page" id="page-reincidencias">
+    <div class="filters">
+        <select id="reinc-dias" onchange="loadReincidenciasDash()">
+            <option value="30">Últimos 30 dias</option>
+            <option value="60">Últimos 60 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="180">Últimos 6 meses</option>
+        </select>
+        <select id="reinc-raio" onchange="loadReincidenciasDash()">
+            <option value="30">Raio 30m</option>
+            <option value="50" selected>Raio 50m</option>
+            <option value="100">Raio 100m</option>
+        </select>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(180px,1fr));">
+        <div class="kpi red"><div class="kpi-label">Locais com reincidência</div><div class="kpi-value" id="reinc-total">—</div></div>
+        <div class="kpi warn"><div class="kpi-label">Chamados abertos agora</div><div class="kpi-value" id="reinc-abertos">—</div></div>
+    </div>
+    <div class="panel">
+        <div class="panel-title">🔁 Pontos de reincidência — obras definitivas prioritárias</div>
+        <div id="reinc-lista"><div class="empty">Carregando...</div></div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 6: SENTIMENTO
+════════════════════════════════════════ -->
+<div class="page" id="page-sentimento">
+    <div class="filters">
+        <select id="sent-dias" onchange="loadSentimentoDash()">
+            <option value="7">Últimos 7 dias</option>
+            <option value="30" selected>Últimos 30 dias</option>
+            <option value="90">Últimos 90 dias</option>
+        </select>
+    </div>
+    <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));">
+        <div class="kpi red"><div class="kpi-label">Negativos</div><div class="kpi-value" id="sent-neg">—</div></div>
+        <div class="kpi green"><div class="kpi-label">Positivos</div><div class="kpi-value" id="sent-pos">—</div></div>
+        <div class="kpi blue"><div class="kpi-label">Neutros</div><div class="kpi-value" id="sent-neu">—</div></div>
+        <div class="kpi warn"><div class="kpi-label">Taxa negatividade</div><div class="kpi-value" id="sent-taxa">—%</div></div>
+    </div>
+    <div id="sent-alerta" style="display:none;background:rgba(220,38,38,.08);border:1px solid #dc2626;padding:12px;border-radius:8px;margin-bottom:16px;color:#dc2626;font-size:0.85rem;">
+        ⚠️ Taxa de negatividade acima de 40% — revisão de processos recomendada.
+    </div>
+    <div class="grid-2">
+        <div class="panel">
+            <div class="panel-title">😤 Top reclamações</div>
+            <div id="sent-reclamacoes"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">😊 Top elogios</div>
+            <div id="sent-elogios"></div>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title">📋 Avaliações negativas recentes</div>
+        <div id="sent-negativas"></div>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 7: HEATMAP TEMPORAL
+════════════════════════════════════════ -->
+<div class="page" id="page-heatmap">
+    <div class="filters">
+        <select id="ht-dias" onchange="loadHeatmapDash()">
+            <option value="30">Últimos 30 dias</option>
+            <option value="90" selected>Últimos 90 dias</option>
+            <option value="180">Últimos 6 meses</option>
+        </select>
+    </div>
+    <div class="panel" style="margin-bottom:16px;">
+        <div id="ht-insight" style="font-size:0.9rem;font-weight:500;color:var(--accent);margin-bottom:16px;"></div>
+        <div style="overflow-x:auto;">
+            <div style="display:flex;gap:2px;margin-bottom:4px;margin-left:64px;">
+                <!-- hour labels inserted by JS -->
+            </div>
+            <div id="ht-grid" style="display:flex;flex-direction:column;gap:3px;min-width:600px;"></div>
+        </div>
+        <div style="display:flex;gap:12px;margin-top:12px;font-size:0.72rem;color:var(--text-muted);align-items:center;">
+            <span>Intensidade:</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:var(--bg);border:1px solid var(--border);border-radius:2px;display:inline-block;"></span>Nenhum</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#0099aa;opacity:.5;border-radius:2px;display:inline-block;"></span>Baixo</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#d97706;border-radius:2px;display:inline-block;"></span>Médio</span>
+            <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:#dc2626;border-radius:2px;display:inline-block;"></span>Alto</span>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title">📊 Volume por dia da semana</div>
+        <canvas id="chart-dow" height="120"></canvas>
+    </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     TAB 8: RELATÓRIOS
+════════════════════════════════════════ -->
+<div class="page" id="page-relatorios">
+    <div class="grid-2" style="margin-bottom:20px;">
+        <div class="panel">
+            <div class="panel-title">📋 Gerar relatório mensal</div>
+            <div class="filters" style="flex-direction:column;align-items:flex-start;">
+                <div style="display:flex;gap:8px;width:100%;">
+                    <select id="rel-mes" style="flex:1;">
+                        <!-- populated by JS -->
+                    </select>
+                    <select id="rel-ano" style="width:90px;">
+                        <!-- populated by JS -->
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;margin-top:8px;">
+                    <button class="btn btn-primary" onclick="gerarRelatorio()">Gerar relatório</button>
+                    <button class="btn btn-secondary" onclick="exportarCSV()">💾 Exportar CSV</button>
+                </div>
+            </div>
+            <div id="rel-resultado" style="margin-top:12px;"></div>
+        </div>
+        <div class="panel">
+            <div class="panel-title">📚 Relatórios anteriores</div>
+            <div id="rel-historico"><div class="empty">Carregando...</div></div>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-title">📊 Resumo do painel público (tempo real)</div>
+        <div class="kpi-grid" style="grid-template-columns:repeat(auto-fit,minmax(160px,1fr));margin-bottom:0;" id="painel-kpis">
+            <div class="skeleton" style="height:80px;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const API = window.location.origin + '/api';
+
+    // ── Auth ──────────────────────────────────────────────────────────
+    function getToken() { return localStorage.getItem('token'); }
+
+    function checkAuth() {
+        const token = getToken();
+        const user = localStorage.getItem('user');
+        if (!token || !user) { window.location.href = '/app'; return null; }
+        return JSON.parse(user);
+    }
+
+    async function logout() {
+        try {
+            const token = getToken();
+            if (token) await fetch(API + '/auth/logout', {
+                method: 'POST', headers: { Authorization: 'Bearer ' + token }
+            });
+        } catch(e) {}
+        localStorage.clear();
+        window.location.href = '/app';
+    }
+
+    async function req(endpoint, opts = {}) {
+        const token = getToken();
+        const headers = { 'Content-Type': 'application/json', ...opts.headers };
+        if (token) headers['Authorization'] = 'Bearer ' + token;
+        const r = await fetch(API + endpoint, { ...opts, headers });
+        if (r.status === 401) { logout(); throw new Error('auth'); }
+        return r;
+    }
+
+    // ── Init ──────────────────────────────────────────────────────────
+    const user = checkAuth();
+    if (user) {
+        document.getElementById('user-name').textContent = user.nome.split(' ')[0];
+        const ROLES = { admin:'Administrador', gestor:'Gestor', secretaria:'Secretaria', equipe:'Equipe', cidadao:'Cidadão' };
+        document.getElementById('role-badge').textContent = ROLES[user.tipo] || user.tipo;
+        initTabs();
+        loadVisaoGeral();
+        populateRelMeses();
+    }
+
+    // ── Tabs ──────────────────────────────────────────────────────────
+    const TAB_LOADERS = {
+        'visao-geral':  loadVisaoGeral,
+        'chamados':     loadChamadosDash,
+        'sla':          loadSLADash,
+        'secretarias':  loadSecretariasDash,
+        'reincidencias':loadReincidenciasDash,
+        'sentimento':   loadSentimentoDash,
+        'heatmap':      loadHeatmapDash,
+        'relatorios':   loadRelatoriosDash,
+    };
+    let loadedTabs = new Set(['visao-geral']);
+
+    function initTabs() {
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+                btn.classList.add('active');
+                const tab = btn.dataset.tab;
+                document.getElementById('page-' + tab).classList.add('active');
+                if (!loadedTabs.has(tab) && TAB_LOADERS[tab]) {
+                    TAB_LOADERS[tab]();
+                    loadedTabs.add(tab);
+                }
+            });
+        });
+    }
+
+    // ── Helpers ───────────────────────────────────────────────────────
+    function fmt(n) { return (n ?? '—').toLocaleString('pt-BR'); }
+    function fmtDate(s) {
+        if (!s) return '—';
+        return new Date(s).toLocaleString('pt-BR', { day:'2-digit', month:'2-digit', hour:'2-digit', minute:'2-digit' });
+    }
+
+    function barChart(containerId, items, labelKey, valueKey, color = '#0099aa') {
+        const el = document.getElementById(containerId);
+        if (!el) return;
+        const max = Math.max(...items.map(i => i[valueKey] || 0), 1);
+        el.innerHTML = items.map(item => `
+            <div class="bar-item">
+                <span class="bar-label" title="${item[labelKey]}">${(item[labelKey] || '—').slice(0, 22)}</span>
+                <div class="bar-track"><div class="bar-fill" style="width:${Math.round(item[valueKey]/max*100)}%;background:${color};"></div></div>
+                <span class="bar-count">${fmt(item[valueKey])}</span>
+            </div>`).join('');
+    }
+
+    function doughnutChart(canvasId, labels, values, colors) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+        if (ctx._chart) ctx._chart.destroy();
+        ctx._chart = new Chart(ctx, {
+            type: 'doughnut',
+            data: { labels, datasets: [{ data: values, backgroundColor: colors, borderWidth: 0 }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                plugins: {
+                    legend: { position: 'right', labels: { font: { size: 11 }, padding: 12, boxWidth: 12 } }
+                }
+            }
+        });
+    }
+
+    function barChartJS(canvasId, labels, values, color = '#0099aa', horizontal = false) {
+        const ctx = document.getElementById(canvasId);
+        if (!ctx) return;
+        if (ctx._chart) ctx._chart.destroy();
+        ctx._chart = new Chart(ctx, {
+            type: 'bar',
+            data: { labels, datasets: [{ data: values, backgroundColor: color + 'cc', borderColor: color, borderWidth: 1 }] },
+            options: {
+                responsive: true, maintainAspectRatio: true,
+                indexAxis: horizontal ? 'y' : 'x',
+                plugins: { legend: { display: false } },
+                scales: { x: { grid: { display: false } }, y: { beginAtZero: true, grid: { color: '#f1f5f9' } } }
+            }
+        });
+    }
+
+    // ════════════════════════════════════════
+    //  VISÃO GERAL
+    // ════════════════════════════════════════
+    async function loadVisaoGeral() {
+        try {
+            const [dashRes, painelRes] = await Promise.all([
+                req('/relatorios/dashboard'),
+                fetch(window.location.origin + '/api/ia/painel-publico')
+            ]);
+
+            if (dashRes.ok) {
+                const d = await dashRes.json();
+                const total = d.total_chamados || 0;
+
+                document.getElementById('kpi-total').textContent = fmt(total);
+
+                const byStatus = {};
+                (d.por_status || []).forEach(s => byStatus[s.status] = s.total);
+                document.getElementById('kpi-abertos').textContent = fmt(byStatus.aberto || 0);
+                document.getElementById('kpi-andamento').textContent = fmt(byStatus.em_andamento || 0);
+                document.getElementById('kpi-resolvidos').textContent = fmt(byStatus.resolvido || 0);
+
+                const taxa = total > 0 ? Math.round((byStatus.resolvido || 0) / total * 100) : 0;
+                document.getElementById('kpi-taxa').textContent = 'taxa: ' + taxa + '%';
+
+                const av = d.avaliacao_media;
+                document.getElementById('kpi-avaliacao').textContent = av ? av.toFixed(1) + ' ⭐' : '—';
+
+                // Tempo médio (calculado se disponível)
+                if (d.tempo_medio_horas) {
+                    document.getElementById('kpi-tempo').textContent = d.tempo_medio_horas + 'h';
+                } else {
+                    document.getElementById('kpi-tempo').textContent = '—';
+                }
+
+                // Críticos abertos
+                const criticos = await req('/chamados?prioridade=critica&status=aberto&limit=1');
+                if (criticos.ok) {
+                    const cd = await criticos.json();
+                    document.getElementById('kpi-criticos').textContent = fmt(cd.total || 0);
+                }
+
+                // Charts
+                if (d.top_categorias) barChart('chart-categorias', d.top_categorias, 'categoria', 'total');
+                if (d.top_bairros) barChart('chart-bairros', d.top_bairros, 'bairro', 'total', '#2563eb');
+
+                // Status doughnut
+                if (d.por_status) {
+                    doughnutChart('chart-status',
+                        d.por_status.map(s => s.status.replace('_', ' ')),
+                        d.por_status.map(s => s.total),
+                        ['#378add', '#f59e0b', '#059669', '#dc2626']
+                    );
+                }
+
+                // Prioridade doughnut
+                if (d.por_prioridade) {
+                    doughnutChart('chart-prioridade',
+                        d.por_prioridade.map(p => p.prioridade),
+                        d.por_prioridade.map(p => p.total),
+                        ['#dc2626', '#d97706', '#0099aa', '#059669']
+                    );
+                }
+
+                // Recentes
+                if (d.recentes) {
+                    document.getElementById('recentes-lista').innerHTML = d.recentes.slice(0, 10).map(c => `
+                        <div class="bar-item" style="padding:10px 0;">
+                            <div style="flex:1;">
+                                <div style="font-size:0.85rem;font-weight:500;">${c.titulo}</div>
+                                <div style="font-size:0.72rem;color:var(--text-muted);">${c.protocolo} · ${c.categoria?.nome || '—'} · ${c.bairro?.nome || '—'} · ${fmtDate(c.created_at)}</div>
+                            </div>
+                            <span class="badge ${c.status}">${c.status.replace('_',' ')}</span>
+                        </div>`).join('') || '<div class="empty">Nenhum chamado recente</div>';
+                }
+            }
+
+            // Painel público (mês)
+            if (painelRes.ok) {
+                const p = await painelRes.json();
+                document.getElementById('kpi-mes-resolvidos').textContent = fmt(p.mes?.resolvidos || 0);
+                document.getElementById('kpi-mes-taxa').textContent = 'taxa: ' + (p.mes?.taxa_resolucao || 0) + '%';
+            }
+
+        } catch(e) { console.error('Visão geral:', e); }
+    }
+
+    // ════════════════════════════════════════
+    //  CHAMADOS
+    // ════════════════════════════════════════
+    let chamadosPage = 1;
+    async function loadChamadosDash(pagina = 1) {
+        chamadosPage = pagina;
+        const status = document.getElementById('f-status').value;
+        const prio = document.getElementById('f-prioridade').value;
+        const busca = document.getElementById('f-busca').value;
+
+        let url = `/chamados?pagina=${pagina}&limit=15`;
+        if (status) url += '&status=' + status;
+        if (prio) url += '&prioridade=' + prio;
+        if (busca) url += '&search=' + encodeURIComponent(busca);
+
+        try {
+            const r = await req(url);
+            if (!r.ok) return;
+            const d = await r.json();
+
+            const tbody = document.getElementById('chamados-tbody');
+            const PRIO_COLORS = { critica:'#dc2626', alta:'#d97706', media:'#0099aa', baixa:'#059669' };
+
+            tbody.innerHTML = (d.items || []).length > 0
+                ? (d.items || []).map(c => `
+                    <tr>
+                        <td style="font-family:monospace;font-size:0.78rem;">${c.protocolo}</td>
+                        <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="${c.titulo}">${c.titulo}</td>
+                        <td style="font-size:0.78rem;">${c.categoria?.nome || '—'}</td>
+                        <td style="font-size:0.78rem;">${c.bairro?.nome || '—'}</td>
+                        <td><span style="color:${PRIO_COLORS[c.prioridade]||'var(--text-muted)'};font-size:0.78rem;font-weight:600;">${c.prioridade}</span></td>
+                        <td><span class="badge ${c.status}">${c.status.replace('_',' ')}</span></td>
+                        <td style="font-size:0.75rem;color:var(--text-muted);">${fmtDate(c.created_at)}</td>
+                    </tr>`).join('')
+                : '<tr><td colspan="7"><div class="empty">Nenhum chamado encontrado</div></td></tr>';
+
+            // Pagination
+            const pages = d.paginas || 1;
+            const total = d.total || 0;
+            document.getElementById('chamados-pagination').innerHTML = `
+                <span>${fmt(total)} chamados</span>
+                ${pagina > 1 ? '<button class="btn btn-secondary" onclick="loadChamadosDash(' + (pagina-1) + ')">← Anterior</button>' : ''}
+                <span style="margin:0 4px;">Pág. ${pagina}/${pages}</span>
+                ${pagina < pages ? '<button class="btn btn-secondary" onclick="loadChamadosDash(' + (pagina+1) + ')">Próxima →</button>' : ''}`;
+        } catch(e) { console.error('Chamados:', e); }
+    }
+
+    async function exportarCSV() {
+        const status = document.getElementById('f-status')?.value || '';
+        const prio = document.getElementById('f-prioridade')?.value || '';
+        let url = API + '/chamados/export/csv?';
+        if (status) url += 'status=' + status + '&';
+        if (prio) url += 'prioridade=' + prio;
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'chamados.csv';
+        link.click();
+    }
+
+    // ════════════════════════════════════════
+    //  SLA
+    // ════════════════════════════════════════
+    async function loadSLADash() {
+        try {
+            const r = await req('/chamados?limit=200');
+            if (!r.ok) return;
+            const d = await r.json();
+            const chamados = d.items || [];
+            const agora = new Date();
+
+            let ok = 0, atrasados = 0, hojeFim = 0, totalTempos = [], categorias = {};
+
+            chamados.forEach(c => {
+                const slaH = c.categoria?.sla_horas || 72;
+                const criado = new Date(c.created_at);
+                const prazo = new Date(criado.getTime() + slaH * 3600000);
+                const diff = (agora - criado) / 3600000;
+
+                if (c.status === 'resolvido' && c.data_resolucao) {
+                    const dur = (new Date(c.data_resolucao) - criado) / 3600000;
+                    totalTempos.push(dur);
+                    if (dur <= slaH) ok++;
+
+                    const cn = c.categoria?.nome || 'Sem categoria';
+                    if (!categorias[cn]) categorias[cn] = [];
+                    categorias[cn].push(dur);
+                } else if (c.status !== 'cancelado') {
+                    if (agora > prazo) atrasados++;
+                    else if ((prazo - agora) < 86400000) hojeFim++;
+                }
+            });
+
+            const tempoMedio = totalTempos.length ? Math.round(totalTempos.reduce((a,b)=>a+b,0)/totalTempos.length) : 0;
+            const taxa = (ok + atrasados) > 0 ? Math.round(ok/(ok+atrasados)*100) : 0;
+
+            document.getElementById('sla-ok').textContent = fmt(ok);
+            document.getElementById('sla-atrasados').textContent = fmt(atrasados);
+            document.getElementById('sla-hoje').textContent = fmt(hojeFim);
+            document.getElementById('sla-taxa').textContent = taxa + '%';
+            document.getElementById('sla-tempo').textContent = tempoMedio + 'h';
+
+            // Tempo médio por categoria
+            const catArr = Object.entries(categorias).map(([nome, tempos]) => ({
+                nome, media: Math.round(tempos.reduce((a,b)=>a+b,0)/tempos.length)
+            })).sort((a,b) => b.media - a.media).slice(0, 8);
+
+            document.getElementById('sla-categorias').innerHTML = catArr.map(c => `
+                <div class="bar-item">
+                    <span class="bar-label" title="${c.nome}">${c.nome.slice(0,22)}</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:${Math.min(100, Math.round(c.media/200*100))}%;background:#d97706;"></div></div>
+                    <span class="bar-count">${c.media}h</span>
+                </div>`).join('') || '<div class="empty">Sem dados</div>';
+
+            // SLA vencidos
+            const vencidos = chamados.filter(c => {
+                if (['resolvido','cancelado'].includes(c.status)) return false;
+                const slaH = c.categoria?.sla_horas || 72;
+                return (agora - new Date(c.created_at)) / 3600000 > slaH;
+            }).slice(0, 10);
+
+            document.getElementById('sla-vencidos-lista').innerHTML = vencidos.length
+                ? vencidos.map(c => `
+                    <div style="padding:8px 0;border-bottom:0.5px solid var(--border);">
+                        <div style="font-size:0.82rem;font-weight:500;">${c.titulo.slice(0,50)}</div>
+                        <div style="font-size:0.72rem;color:var(--danger);">${c.protocolo} · SLA: ${c.categoria?.sla_horas||72}h · ${Math.round((agora-new Date(c.created_at))/3600000)}h em aberto</div>
+                    </div>`).join('')
+                : '<div class="empty">Nenhum SLA vencido</div>';
+
+            // Chart SLA por prioridade
+            const prioData = ['critica','alta','media','baixa'].map(p => {
+                const cs = chamados.filter(c => c.prioridade === p && c.status === 'resolvido' && c.data_resolucao);
+                const slaOk = cs.filter(c => {
+                    const slaH = c.categoria?.sla_horas || 72;
+                    return (new Date(c.data_resolucao)-new Date(c.created_at))/3600000 <= slaH;
+                }).length;
+                return cs.length > 0 ? Math.round(slaOk/cs.length*100) : 0;
+            });
+            barChartJS('chart-sla-prioridade', ['Crítica','Alta','Média','Baixa'], prioData, '#0099aa');
+
+        } catch(e) { console.error('SLA:', e); }
+    }
+
+    // ════════════════════════════════════════
+    //  SECRETARIAS
+    // ════════════════════════════════════════
+    async function loadSecretariasDash() {
+        try {
+            const r = await req('/inovacoes/secretarias/performance?dias=30');
+            if (!r.ok) {
+                document.getElementById('sec-ranking').innerHTML = '<div class="empty">Sem dados ou sem permissão</div>';
+                return;
+            }
+            const d = await r.json();
+            const secs = d.secretarias || [];
+
+            document.getElementById('sec-melhor').textContent = d.melhor || '—';
+            document.getElementById('sec-pior').textContent = d.pior || '—';
+            document.getElementById('sec-alertas').textContent = secs.filter(s => s.alerta_baixo_desempenho).length;
+
+            document.getElementById('sec-ranking').innerHTML = secs.length
+                ? secs.slice(0,10).map((s,i) => `
+                    <div class="sec-row">
+                        <div class="sec-rank ${i<3?'top':''}">#${i+1}</div>
+                        <div class="sec-name">
+                            <div>${s.secretaria}</div>
+                            <div style="font-size:0.72rem;color:var(--text-muted);">${s.total_chamados} chamados · SLA: ${s.taxa_sla_cumprido}% · Avg: ${s.avaliacao_media||'—'}/5</div>
+                            ${s.alerta_baixo_desempenho ? '<div class="sec-alert">⚠️ Baixo desempenho</div>' : ''}
+                        </div>
+                        <div class="sec-score">${s.score}</div>
+                    </div>`).join('')
+                : '<div class="empty">Nenhuma secretaria com dados no período</div>';
+
+            if (secs.length > 0) {
+                barChartJS('chart-secretarias',
+                    secs.slice(0,8).map(s => s.secretaria.slice(0,12)),
+                    secs.slice(0,8).map(s => s.score),
+                    '#0099aa'
+                );
+            }
+        } catch(e) { console.error('Secretarias:', e); }
+    }
+
+    // ════════════════════════════════════════
+    //  REINCIDÊNCIAS
+    // ════════════════════════════════════════
+    async function loadReincidenciasDash() {
+        const dias = document.getElementById('reinc-dias')?.value || 90;
+        const raio = document.getElementById('reinc-raio')?.value || 50;
+        const lista = document.getElementById('reinc-lista');
+        lista.innerHTML = '<div class="empty">Calculando...</div>';
+        try {
+            const r = await req('/inovacoes/reincidencias?dias=' + dias + '&raio_metros=' + raio);
+            if (!r.ok) { lista.innerHTML = '<div class="empty">Sem permissão</div>'; return; }
+            const d = await r.json();
+
+            document.getElementById('reinc-total').textContent = fmt(d.total_pontos_reincidentes);
+            document.getElementById('reinc-abertos').textContent = fmt((d.reincidencias||[]).reduce((a,r)=>a+r.abertos_atuais,0));
+
+            lista.innerHTML = (d.reincidencias||[]).length
+                ? d.reincidencias.slice(0,20).map(r => `
+                    <div style="padding:12px;border:0.5px solid var(--border);border-left:3px solid var(--danger);border-radius:8px;margin-bottom:8px;">
+                        <div style="display:flex;justify-content:space-between;align-items:flex-start;">
+                            <div>
+                                <div style="font-size:0.88rem;font-weight:500;">${r.local}</div>
+                                <div style="font-size:0.75rem;color:var(--text-muted);">${[r.bairro,r.categoria].filter(Boolean).join(' · ')}</div>
+                            </div>
+                            <div style="text-align:right;">
+                                <div style="font-family:'Syne',sans-serif;font-size:1.5rem;font-weight:800;color:var(--danger);">${r.total_ocorrencias}×</div>
+                                <div style="font-size:0.68rem;color:var(--text-muted);">${r.abertos_atuais} abertos agora</div>
+                            </div>
+                        </div>
+                        <div style="font-size:0.72rem;margin-top:6px;color:var(--warn);">⚠️ ${r.alerta}</div>
+                    </div>`).join('')
+                : '<div class="empty">🎉 Nenhuma reincidência detectada no período</div>';
+        } catch(e) { lista.innerHTML = '<div class="empty">Erro ao carregar</div>'; }
+    }
+
+    // ════════════════════════════════════════
+    //  SENTIMENTO
+    // ════════════════════════════════════════
+    async function loadSentimentoDash() {
+        const dias = document.getElementById('sent-dias')?.value || 30;
+        try {
+            const r = await req('/inovacoes/sentimento/avaliacoes?dias=' + dias);
+            if (!r.ok) return;
+            const d = await r.json();
+            const { negativos, positivos, neutros, taxa_negatividade } = d.resumo;
+
+            document.getElementById('sent-neg').textContent = fmt(negativos);
+            document.getElementById('sent-pos').textContent = fmt(positivos);
+            document.getElementById('sent-neu').textContent = fmt(neutros);
+            document.getElementById('sent-taxa').textContent = taxa_negatividade + '%';
+            document.getElementById('sent-alerta').style.display = d.alerta ? 'block' : 'none';
+
+            // Top reclamações
+            document.getElementById('sent-reclamacoes').innerHTML = d.top_reclamacoes.map(([w,n]) => `
+                <div class="bar-item">
+                    <span class="bar-label">${w}</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/d.top_reclamacoes[0][1]*100)}%;background:#dc2626;"></div></div>
+                    <span class="bar-count">${n}</span>
+                </div>`).join('') || '<div class="empty">Sem dados</div>';
+
+            // Top elogios
+            document.getElementById('sent-elogios').innerHTML = d.top_elogios.map(([w,n]) => `
+                <div class="bar-item">
+                    <span class="bar-label">${w}</span>
+                    <div class="bar-track"><div class="bar-fill" style="width:${Math.round(n/(d.top_elogios[0]?.[1]||1)*100)}%;background:#059669;"></div></div>
+                    <span class="bar-count">${n}</span>
+                </div>`).join('') || '<div class="empty">Sem dados</div>';
+
+            // Avaliações negativas
+            document.getElementById('sent-negativas').innerHTML = (d.avaliacoes_negativas||[]).slice(0,8).map(a => `
+                <div style="padding:10px 0;border-bottom:0.5px solid var(--border);">
+                    <div style="font-size:0.82rem;">"${a.comentario}"</div>
+                    <div style="font-size:0.72rem;color:var(--text-muted);margin-top:3px;">
+                        ${a.protocolo} · ${a.categoria||'—'} · ${'⭐'.repeat(a.avaliacao||1)} · ${a.palavras?.join(', ')||''}
+                    </div>
+                </div>`).join('') || '<div class="empty">Sem avaliações negativas</div>';
+        } catch(e) { console.error('Sentimento:', e); }
+    }
+
+    // ════════════════════════════════════════
+    //  HEATMAP TEMPORAL
+    // ════════════════════════════════════════
+    async function loadHeatmapDash() {
+        const dias = document.getElementById('ht-dias')?.value || 90;
+        try {
+            const r = await req('/inovacoes/heatmap-temporal?dias=' + dias);
+            if (!r.ok) return;
+            const d = await r.json();
+
+            if (d.insight) document.getElementById('ht-insight').textContent = '💡 ' + d.insight;
+
+            const maxVal = d.matriz.reduce((m, row) => Math.max(m, ...row.horas.map(h => h.total)), 0) || 1;
+            const heatGrid = document.getElementById('ht-grid');
+
+            // Hour labels
+            const hourLabels = Array.from({length:24},(_,i)=>i);
+            heatGrid.innerHTML = d.matriz.map(dia => `
+                <div style="display:flex;align-items:center;gap:4px;">
+                    <div style="font-size:0.68rem;color:var(--text-muted);font-weight:600;min-width:60px;">${dia.dia}</div>
+                    <div style="display:flex;gap:2px;flex:1;">
+                        ${dia.horas.map(h => {
+                            const pct = h.total / maxVal;
+                            const bg = pct > 0.7 ? '#dc2626' : pct > 0.4 ? '#d97706' : pct > 0.05 ? '#0099aa' : 'var(--bg)';
+                            const opacity = pct > 0 ? 0.35 + pct * 0.65 : 0.15;
+                            return `<div style="flex:1;height:18px;background:${bg};opacity:${opacity.toFixed(2)};border-radius:2px;cursor:default;"
+                                title="${dia.dia} ${h.hora}: ${h.total} chamados"></div>`;
+                        }).join('')}
+                    </div>
+                    <div style="font-size:0.65rem;color:var(--text-muted);min-width:28px;text-align:right;">${fmt(dia.total_dia)}</div>
+                </div>`).join('');
+
+            // DOW chart
+            const dowValues = d.matriz.map(dia => dia.total_dia);
+            const dowLabels = d.matriz.map(dia => dia.dia.slice(0,3));
+            barChartJS('chart-dow', dowLabels, dowValues, '#2563eb');
+
+        } catch(e) { console.error('Heatmap:', e); }
+    }
+
+    // ════════════════════════════════════════
+    //  RELATÓRIOS
+    // ════════════════════════════════════════
+    function populateRelMeses() {
+        const meses = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+        const selMes = document.getElementById('rel-mes');
+        const selAno = document.getElementById('rel-ano');
+        const now = new Date();
+        meses.forEach((m, i) => {
+            const opt = document.createElement('option');
+            opt.value = i + 1;
+            opt.textContent = m;
+            if (i === now.getMonth()) opt.selected = true;
+            selMes.appendChild(opt);
+        });
+        for (let y = now.getFullYear(); y >= 2024; y--) {
+            const opt = document.createElement('option');
+            opt.value = y; opt.textContent = y;
+            if (y === now.getFullYear()) opt.selected = true;
+            selAno.appendChild(opt);
+        }
+    }
+
+    async function loadRelatoriosDash() {
+        // Histórico de relatórios
+        try {
+            const r = await req('/ia/relatorio/historico');
+            if (r.ok) {
+                const rels = await r.json();
+                document.getElementById('rel-historico').innerHTML = rels.length
+                    ? rels.map(r => `
+                        <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:0.5px solid var(--border);font-size:0.82rem;">
+                            <span>${r.periodo}</span>
+                            <span style="color:var(--text-muted);">${r.total_chamados} chamados</span>
+                            <span style="color:${r.taxa_resolucao>50?'var(--success)':'var(--danger)'};">${r.taxa_resolucao}%</span>
+                        </div>`).join('')
+                    : '<div class="empty">Nenhum relatório gerado ainda</div>';
+            }
+        } catch(e) {}
+
+        // Painel público
+        try {
+            const r = await fetch(window.location.origin + '/api/ia/painel-publico');
+            if (r.ok) {
+                const p = await r.json();
+                document.getElementById('painel-kpis').innerHTML = `
+                    <div class="kpi teal"><div class="kpi-label">Hoje — abertos</div><div class="kpi-value">${fmt(p.hoje?.abertos||0)}</div></div>
+                    <div class="kpi green"><div class="kpi-label">Hoje — resolvidos</div><div class="kpi-value">${fmt(p.hoje?.resolvidos||0)}</div></div>
+                    <div class="kpi blue"><div class="kpi-label">Semana — abertos</div><div class="kpi-value">${fmt(p.semana?.abertos||0)}</div></div>
+                    <div class="kpi green"><div class="kpi-label">Semana — resolvidos</div><div class="kpi-value">${fmt(p.semana?.resolvidos||0)}</div></div>
+                    <div class="kpi warn"><div class="kpi-label">Mês — taxa</div><div class="kpi-value">${p.mes?.taxa_resolucao||0}%</div></div>
+                    <div class="kpi teal"><div class="kpi-label">Total histórico</div><div class="kpi-value">${fmt(p.total_historico||0)}</div></div>`;
+            }
+        } catch(e) {}
+    }
+
+    async function gerarRelatorio() {
+        const mes = document.getElementById('rel-mes').value;
+        const ano = document.getElementById('rel-ano').value;
+        const btn = event.target;
+        btn.textContent = 'Gerando...'; btn.disabled = true;
+        try {
+            const r = await req('/ia/relatorio/gerar?mes=' + mes + '&ano=' + ano, { method: 'POST' });
+            const d = await r.json();
+            if (r.ok) {
+                document.getElementById('rel-resultado').innerHTML = `
+                    <div style="background:var(--bg);border-radius:8px;padding:16px;margin-top:12px;">
+                        <div style="font-weight:600;margin-bottom:8px;">Relatório ${d.periodo} gerado</div>
+                        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-size:0.82rem;">
+                            <div>Total: <strong>${fmt(d.total_chamados)}</strong></div>
+                            <div>Resolvidos: <strong>${fmt(d.resolvidos)}</strong></div>
+                            <div>Taxa: <strong>${d.taxa_resolucao}%</strong></div>
+                            <div>Avaliação: <strong>${d.avaliacao_media}/5</strong></div>
+                            <div>Abertos: <strong>${fmt(d.abertos)}</strong></div>
+                        </div>
+                    </div>`;
+                // Reload histórico
+                loadedTabs.delete('relatorios');
+                loadRelatoriosDash();
+            } else {
+                document.getElementById('rel-resultado').innerHTML = '<div style="color:var(--danger);font-size:0.82rem;">' + (d.detail || 'Erro ao gerar') + '</div>';
+            }
+        } catch(e) {
+            document.getElementById('rel-resultado').innerHTML = '<div style="color:var(--danger);font-size:0.82rem;">Erro de conexão</div>';
+        } finally {
+            btn.textContent = 'Gerar relatório'; btn.disabled = false;
+        }
+    }
+</script>
+</body>
+</html>
