@@ -3,8 +3,8 @@ Sprint 6 — Transparência & Governo Aberto
 API pública, orçamento participativo, auditoria
 """
 from typing import Optional
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from pydantic import BaseModel
@@ -19,6 +19,7 @@ from app.models.sprints_5_8 import (
 from app.models.usuario import Usuario
 from app.utils.auth import get_current_user, require_role
 from app.utils.auditoria import registrar
+from app.utils.rate_limit import check_rate_limit, get_client_ip
 
 router = APIRouter(prefix="/api/transparencia", tags=["Transparência"])
 router_publico = APIRouter(prefix="/api/publico", tags=["API Pública"])
@@ -29,6 +30,7 @@ router_publico = APIRouter(prefix="/api/publico", tags=["API Pública"])
 # ─────────────────────────────────────────
 @router_publico.get("/chamados")
 def chamados_publicos(
+    request: Request,
     status: Optional[str] = None,
     bairro_id: Optional[int] = None,
     categoria_id: Optional[int] = None,
@@ -38,8 +40,13 @@ def chamados_publicos(
 ):
     """
     Endpoint público — dados anonimizados para pesquisadores e jornalistas.
-    Não retorna dados pessoais dos cidadãos.
+    Rate limit: 30 requisições por minuto por IP.
     """
+    # Rate limit: 30 req/min por IP para evitar scraping
+    ip = get_client_ip(request)
+    check_rate_limit(f"publico:{ip}", max_attempts=30, window_seconds=60)
+
+    limit = min(limit, 100)  # máx 100 (era 500 — redução de exposição)
     query = db.query(Chamado)
     if status:
         query = query.filter(Chamado.status == status)
@@ -49,7 +56,7 @@ def chamados_publicos(
         query = query.filter(Chamado.categoria_id == categoria_id)
 
     total = query.count()
-    chamados = query.order_by(Chamado.created_at.desc()).offset(offset).limit(min(limit, 500)).all()
+    chamados = query.order_by(Chamado.created_at.desc()).offset(offset).limit(limit).all()
 
     return {
         "total": total,
@@ -104,7 +111,7 @@ def estatisticas_publicas(db: Session = Depends(get_db)):
         "taxa_resolucao": round(resolvidos / total * 100, 1) if total else 0,
         "top_bairros": [{"bairro": b, "total": t} for b, t in por_bairro],
         "top_categorias": [{"categoria": c, "total": t} for c, t in por_categoria],
-        "gerado_em": datetime.utcnow().isoformat(),
+        "gerado_em": datetime.now(timezone.utc).isoformat(),
     }
 
 

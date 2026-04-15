@@ -6,14 +6,27 @@ Este arquivo adiciona endpoints de health check e monitoramento
 para facilitar a observabilidade do sistema.
 """
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import text
 from datetime import datetime
-import psutil
-import os
+import psutil, os, time
 from typing import Dict, Any
 
 router = APIRouter()
+
+# Proteção simples para endpoints de infra — apenas admin via token interno
+_METRICS_TOKEN = os.environ.get("METRICS_TOKEN", "")
+
+def _check_metrics_auth(credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer(auto_error=False))):
+    """Valida token de metrics. Se METRICS_TOKEN não configurado, libera apenas em dev."""
+    if not _METRICS_TOKEN:
+        return  # dev local sem configuração: libera
+    if not credentials or credentials.credentials != _METRICS_TOKEN:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=401, detail="Token de métricas inválido")
+
+_PROCESS_START = time.time()
 
 
 @router.get("/health")
@@ -26,7 +39,7 @@ async def health_check():
     }
 
 
-@router.get("/health/detailed")
+@router.get("/health/detailed", dependencies=[Depends(_check_metrics_auth)])
 async def detailed_health_check():
     from app.database.database import engine
 
@@ -212,7 +225,7 @@ async def startup_check():
         )
 
 
-@router.get("/metrics")
+@router.get("/metrics", dependencies=[Depends(_check_metrics_auth)])
 async def metrics_endpoint():
     from app.database.database import engine
     from app.models.chamado import Chamado
@@ -223,45 +236,24 @@ async def metrics_endpoint():
         "application": {
             "name": "zeladoria_urbana",
             "version": "4.0.0",
-            "uptime_seconds": psutil.Process(os.getpid()).create_time()
+            "uptime_seconds": round(time.time() - _PROCESS_START, 1),
         },
         "system": {
             "cpu_usage_percent": psutil.cpu_percent(interval=0.5),
             "memory_usage_percent": psutil.virtual_memory().percent,
-            "disk_usage_percent": psutil.disk_usage('/').percent
+            "disk_usage_percent": psutil.disk_usage('/').percent,
         },
-        "database": {
-            "status": "unknown",
-            "tables": {}
-        }
+        "database": {"status": "unknown", "tables": {}},
     }
-    
-    # Métricas do banco de dados
+
     try:
         with engine.connect() as connection:
-            # Total de registros por tabela
-            result = connection.execute(text("SELECT COUNT(*) FROM chamados"))
-            metrics["database"]["tables"]["chamados"] = result.scalar()
-            
-            result = connection.execute(text("SELECT COUNT(*) FROM usuarios"))
-            metrics["database"]["tables"]["usuarios"] = result.scalar()
-            
-            result = connection.execute(text("SELECT COUNT(*) FROM categorias"))
-            metrics["database"]["tables"]["categorias"] = result.scalar()
-            
+            metrics["database"]["tables"]["chamados"] = connection.execute(text("SELECT COUNT(*) FROM chamados")).scalar()
+            metrics["database"]["tables"]["usuarios"] = connection.execute(text("SELECT COUNT(*) FROM usuarios")).scalar()
+            metrics["database"]["tables"]["categorias"] = connection.execute(text("SELECT COUNT(*) FROM categorias")).scalar()
             metrics["database"]["status"] = "healthy"
     except Exception as e:
         metrics["database"]["status"] = "unhealthy"
         metrics["database"]["error"] = str(e)
-    
+
     return metrics
-
-
-# Adicionar ao main.py:
-"""
-# No arquivo main.py, adicione:
-
-from app.health import router as health_router
-
-app.include_router(health_router, tags=["Health Check"])
-"""

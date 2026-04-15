@@ -253,6 +253,13 @@ async def criar_chamado(
     db.commit()
     db.refresh(chamado)
 
+    # Gamificação: pontos de abertura de chamado (não depende mais de chamada manual do frontend)
+    try:
+        from app.routers.engajamento_router import adicionar_pontos
+        adicionar_pontos(db, current_user.id, "abrir_chamado")
+    except Exception:
+        pass  # gamificação nunca deve bloquear o fluxo principal
+
     # Sprint 18: notificação de criação em background
     if current_user.tipo == "cidadao":
         background_tasks.add_task(notificar_criacao, chamado)

@@ -3,9 +3,9 @@ Sprint 13 — SSO com Portal Municipal
 Simulação de Single Sign-On com portal cidadão de Belém
 Em produção: integrar com o IdP real da Prefeitura (Keycloak/OAuth2)
 """
-import os, secrets, hashlib
+import os, secrets, hashlib, time
 from typing import Optional
-from datetime import datetime, timedelta
+from datetime import datetime, timezone
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.responses import RedirectResponse
 from sqlalchemy.orm import Session
@@ -17,8 +17,17 @@ from app.utils.auth import create_access_token
 
 router = APIRouter(prefix="/api/sso", tags=["SSO — Portal Municipal"])
 
-# Estado temporário dos code challenges (em produção usar Redis)
+# Estado temporário dos code challenges — TTL de 5 min, limpeza automática
 _pending_states: dict = {}
+_SSO_TTL = 300  # 5 minutos
+
+
+def _limpar_states_expirados():
+    """Remove states com mais de 5 minutos (chamado a cada requisição de /iniciar)."""
+    agora = time.monotonic()
+    expirados = [k for k, v in _pending_states.items() if agora - v["ts"] > _SSO_TTL]
+    for k in expirados:
+        del _pending_states[k]
 
 # Configurações SSO (variáveis de ambiente em produção)
 SSO_CLIENT_ID = os.environ.get("SSO_CLIENT_ID", "zelo-app")
@@ -33,19 +42,14 @@ def _gerar_state() -> str:
 
 @router.get("/iniciar")
 def iniciar_sso(redirect_after: str = "/app"):
-    """
-    Inicia o fluxo OAuth2 com o portal municipal.
-    Em produção: redireciona para Keycloak/IdP da Prefeitura.
-    Em desenvolvimento: retorna URL de simulação.
-    """
-    state = _gerar_state()
+    _limpar_states_expirados()  # limpeza automática de states expirados
+    state = secrets.token_urlsafe(32)
     _pending_states[state] = {
-        "criado_em": datetime.utcnow(),
+        "ts": time.monotonic(),
         "redirect_after": redirect_after,
     }
 
     if SSO_PROVIDER_URL:
-        # Produção: redireciona para IdP real
         auth_url = (
             f"{SSO_PROVIDER_URL}/protocol/openid-connect/auth"
             f"?client_id={SSO_CLIENT_ID}"
@@ -56,7 +60,6 @@ def iniciar_sso(redirect_after: str = "/app"):
         )
         return RedirectResponse(auth_url)
 
-    # Desenvolvimento: retorna URL de simulação
     return {
         "modo": "simulacao",
         "state": state,
@@ -72,29 +75,19 @@ def simular_callback_sso(
     codigo: str = "DEMO_CODE",
     db: Session = Depends(get_db),
 ):
-    """
-    Simula o callback do IdP para demonstração.
-    Em produção: este endpoint é substituído pelo /callback real.
-    """
     if state not in _pending_states:
         raise HTTPException(400, "State inválido ou expirado")
-
     info = _pending_states.pop(state)
-
-    # Verifica se expirou (5 min)
-    if (datetime.utcnow() - info["criado_em"]).total_seconds() > 300:
+    if time.monotonic() - info["ts"] > _SSO_TTL:
         raise HTTPException(400, "Sessão SSO expirada")
 
-    # Simula usuário vindo do portal
     email_simulado = f"cidadao.sso.{hashlib.md5(state.encode()).hexdigest()[:8]}@belem.pa.gov.br"
-
-    # Cria ou recupera usuário
     usuario = db.query(Usuario).filter_by(email=email_simulado).first()
     if not usuario:
         usuario = Usuario(
             nome="Cidadão Portal Belém",
             email=email_simulado,
-            senha=Usuario.hash_senha(secrets.token_hex(16)),  # senha aleatória — login só via SSO
+            senha=Usuario.hash_senha(secrets.token_hex(16)),
             tipo="cidadao",
             ativo=True,
         )
@@ -103,10 +96,9 @@ def simular_callback_sso(
         db.refresh(usuario)
 
     token = create_access_token(data={"sub": str(usuario.id)})
-
-    # Em produção: redireciona com token no fragment ou via cookie seguro
     redirect = info.get("redirect_after", "/app")
-    return RedirectResponse(f"{redirect}?sso_token={token}&sso_nome={usuario.nome}")
+    # SEGURO: token no fragment (#) — nunca chega ao servidor, não aparece em logs
+    return RedirectResponse(f"{redirect}#sso_token={token}&sso_nome={usuario.nome}")
 
 
 @router.get("/callback")

@@ -21,6 +21,7 @@ from app.routers.ia_router import router as ia_router
 from app.routers.sso_router import router as sso_router
 from app.routers.notificacoes_router import router as notificacoes_router
 from app.routers.onboarding_router import router as onboarding_router
+from app.routers.inovacoes19_router import router as inovacoes19_router
 from app.utils.scheduler_sla import iniciar_scheduler, parar_scheduler
 from app.utils.db_indexes import criar_indexes
 from app.health import router as health_router
@@ -134,6 +135,7 @@ app.include_router(ia_router)
 app.include_router(sso_router)
 app.include_router(notificacoes_router)
 app.include_router(onboarding_router)
+app.include_router(inovacoes19_router)
 app.include_router(health_router, tags=["Health Check"])
 
 # Rota raiz

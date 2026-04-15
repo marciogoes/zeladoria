@@ -72,6 +72,7 @@ def checklist_onboarding(
 ):
     """Verifica quais passos do onboarding o usuário já completou."""
     from app.models.gamificacao import PontosUsuario, VotoChamado
+    from app.models.sprints_5_8 import VotoProposta
 
     pts_rec = db.query(PontosUsuario).filter_by(usuario_id=current_user.id).first()
 
@@ -83,12 +84,16 @@ def checklist_onboarding(
         usuario_id=current_user.id
     ).scalar() > 0
 
+    tem_proposta_votada = db.query(func.count(VotoProposta.id)).filter_by(
+        usuario_id=current_user.id
+    ).scalar() > 0
+
     concluidos = []
-    if True:        concluidos.append(1)   # Sempre — só por entrar
-    if tem_chamado: concluidos.append(2)
-    if tem_voto:    concluidos.append(3)
+    if True:               concluidos.append(1)   # Sempre — só por entrar
+    if tem_chamado:        concluidos.append(2)
+    if tem_voto:           concluidos.append(3)
     if pts_rec and pts_rec.total_pontos >= 10: concluidos.append(4)
-    if pts_rec and pts_rec.total_pontos >= 20: concluidos.append(5)
+    if tem_proposta_votada: concluidos.append(5)  # corrigido: verifica voto real em proposta
 
     pct = round(len(concluidos) / len(PASSOS_ONBOARDING) * 100)
 

@@ -2,15 +2,16 @@
 Sprint 7 — Contratos de Fornecedores + LGPD
 """
 from typing import Optional, List
-from datetime import datetime
-from fastapi import APIRouter, Depends, HTTPException
+from datetime import datetime, timezone
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
+import re
 
 from app.database.database import get_db
 from app.models.sprints_5_8 import Fornecedor, ContratoFornecedor, SolicitacaoLGPD
 from app.models.usuario import Usuario
-from app.utils.auth import get_current_user, require_role
+from app.utils.auth import get_current_user, require_role, revoke_token
 from app.utils.auditoria import registrar
 
 router = APIRouter(prefix="/api/contratos", tags=["Contratos & LGPD"])
@@ -24,6 +25,28 @@ class FornecedorCreate(BaseModel):
     cnpj: str
     email: Optional[str] = None
     telefone: Optional[str] = None
+
+    @field_validator("cnpj")
+    @classmethod
+    def validar_cnpj(cls, v: str) -> str:
+        """Valida formato e dígito verificador do CNPJ."""
+        digits = re.sub(r"\D", "", v)
+        if len(digits) != 14:
+            raise ValueError("CNPJ deve ter 14 dígitos")
+        if len(set(digits)) == 1:
+            raise ValueError("CNPJ inválido")
+
+        def calc(d, weights):
+            s = sum(int(d[i]) * weights[i] for i in range(len(weights)))
+            r = s % 11
+            return 0 if r < 2 else 11 - r
+
+        w1 = [5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        w2 = [6, 5, 4, 3, 2, 9, 8, 7, 6, 5, 4, 3, 2]
+        if calc(digits, w1) != int(digits[12]) or calc(digits, w2) != int(digits[13]):
+            raise ValueError("CNPJ com dígito verificador inválido")
+        # Formata: XX.XXX.XXX/XXXX-XX
+        return f"{digits[:2]}.{digits[2:5]}.{digits[5:8]}/{digits[8:12]}-{digits[12:]}"
 
 
 @router.get("/fornecedores", dependencies=[Depends(require_role("admin", "gestor"))])
@@ -120,6 +143,7 @@ class LGPDRequest(BaseModel):
 @router.post("/lgpd/solicitar")
 def solicitar_lgpd(
     payload: LGPDRequest,
+    request: Request,
     current_user: Usuario = Depends(get_current_user),
     db: Session = Depends(get_db),
 ):
@@ -150,25 +174,31 @@ def solicitar_lgpd(
             },
         }
 
+    agora = datetime.now(timezone.utc)
+
     if tipo == "anonimizar":
         current_user.nome = f"Cidadão Anônimo #{current_user.id}"
         current_user.telefone = None
         current_user.cpf = None
         sol.status = "concluida"
-        sol.concluido_em = datetime.utcnow()
+        sol.concluido_em = agora
         db.commit()
         return {"solicitacao_id": sol.id, "tipo": tipo, "msg": "Dados pessoais anonimizados com sucesso."}
 
     if tipo == "excluir":
-        # Soft-delete: desativa conta
+        # Revoga o token JWT imediatamente (não espera os 8h expirarem)
+        auth_header = request.headers.get("Authorization", "")
+        if auth_header.startswith("Bearer "):
+            revoke_token(auth_header[7:].strip())
+
         current_user.ativo = False
         current_user.nome = f"Conta Excluída #{current_user.id}"
-        current_user.email = f"excluido_{current_user.id}@zelô.app"
+        current_user.email = f"excluido_{current_user.id}@zelo.app"
         current_user.telefone = None
         current_user.cpf = None
         sol.status = "concluida"
-        sol.concluido_em = datetime.utcnow()
+        sol.concluido_em = agora
         db.commit()
-        return {"solicitacao_id": sol.id, "tipo": tipo, "msg": "Conta removida. Dados pessoais excluídos conforme LGPD."}
+        return {"solicitacao_id": sol.id, "tipo": tipo, "msg": "Conta removida e sesso encerrada. Dados pessoais excluídos conforme LGPD."}
 
     return {"solicitacao_id": sol.id, "status": "pendente"}

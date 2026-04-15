@@ -27,6 +27,14 @@ PG_INDEXES = [
     "CREATE INDEX IF NOT EXISTS idx_leituras_sensor_id ON leituras_sensor(sensor_id)",
     "CREATE INDEX IF NOT EXISTS idx_leituras_criado ON leituras_sensor(criado_em DESC)",
     "CREATE INDEX IF NOT EXISTS idx_triagem_criado ON logs_triagem_ia(criado_em DESC)",
+    # Sprint 17 — Histórico de chamados
+    "CREATE INDEX IF NOT EXISTS idx_historico_chamado_id ON chamados_historico(chamado_id)",
+    "CREATE INDEX IF NOT EXISTS idx_historico_criado ON chamados_historico(criado_em DESC)",
+    # Sprint 19 — Push subscriptions
+    "CREATE INDEX IF NOT EXISTS idx_push_sub_usuario ON push_subscriptions(usuario_id)",
+    "CREATE INDEX IF NOT EXISTS idx_push_sub_ativa ON push_subscriptions(ativa)",
+    # Sprint 11 — Triagem IA por chamado
+    "CREATE INDEX IF NOT EXISTS idx_triagem_chamado_id ON logs_triagem_ia(chamado_id)",
 ]
 
 
